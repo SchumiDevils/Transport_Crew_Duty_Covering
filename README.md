@@ -60,7 +60,7 @@ The course recommends delivering the report in **three incremental phases** via 
 
 - [x] **Choose your tech stack** (Normal project gives full freedom). **Decision:**
   - **Language:** Python 3.12.
-  - **Modeling + solver:** `gurobipy` + Gurobi (main solver; free *named academic license* from gurobi.com/academia, activated on the university network or VPN). Use `highspy` (HiGHS, open source) as a second solver to cross-check results.
+  - **Solver (revised in Phase 2):** **HiGHS 1.16** (`highspy`, open source) is the baseline solver: no licence is needed, so the lecturer can reproduce everything. **Gurobi** (`gurobipy`) is a second back-end over the *same* solver-independent model ([src/milp.py](src/milp.py)). Without an academic key it is limited to 2000 variables, so it is used only to cross-check the tiny tests. With a key it becomes a candidate improvement for Phase 3 (Track C).
   - Pinned in [requirements.txt](requirements.txt).
 - [x] **Install the environment** (Python 3.12.10 + `.venv` done; **still to do:** Gurobi academic key, as without it gurobipy is size-limited):
   ```powershell
@@ -116,7 +116,7 @@ The course recommends delivering the report in **three incremental phases** via 
 
 - [x] **Search for existing instances**:
   - Check public transport / crew scheduling benchmarks (e.g., Bus Driver Scheduling / Vehicle Scheduling instances) to see if any can be adapted.
-  - **Result:** the OR-Library crew scheduling set (Beasley & Cao 1996, `csp50`–`csp500`) is adopted ([data/orlib/](data/orlib/), converted with W = 480, T = 720). Its graphs are given explicitly and are **not transitive**, so only (AF) is valid on them. BDSP (Kletzander & Musliu) was rejected: its rules are too different from ours, and the real data are not public.
+  - **Result:** the OR-Library crew scheduling set (Beasley & Cao 1996, `csp50`–`csp500`) is adopted ([data/orlib/](data/orlib/), converted with W = 480, T = 720). Its graphs are given explicitly and are **not transitive**, so only (AF) is exact on them. (CF) is a *restriction* there (feasible solutions, upper bound), **not** a relaxation; this was corrected in Phase 2. BDSP (Kletzander & Musliu) was rejected: its rules are too different from ours, and the real data are not public.
 - [x] **Design and implement a scalable generator (`data/generator.py`)**:
   - Make it deterministic via configurable random seeds and save instances in a clean format (JSON or plain text).
   - Include parameters that **realistically control problem difficulty**:
@@ -138,20 +138,30 @@ The course recommends delivering the report in **three incremental phases** via 
 
 #### Step 3 — Initial Implementation & Verification
 
-- [ ] **Implement an independent solution validator (`src/validator.py`)**:
+> **Step 3 status: done.** Run the checks with `python tests/test_small.py` (9 hand-made instances × 3 models × 2 solvers, plus 5 validator negative tests, all passing). Full baseline experiment:
+> ```powershell
+> python src/run_experiments.py --models AF CF CFM --groups scale factor orlib --time-limit 300 --threads 1 --workers 5 --out results/raw/baseline.csv
+> python src/analyze_baseline.py     # report/tables/base_*.tex, report/figures/base_scale.pdf
+> ```
+> **Corrections made in Phase 2:**
+> - On non-transitive graphs (CF) is a **restriction**, not a relaxation (Rédei: every acyclic tournament has a Hamiltonian path). Fixed in §1.3 and §2.
+> - The employee pool for (CF) must be sized from a *pairwise-compatible* greedy solution. Otherwise (CF) can become infeasible on non-transitive graphs; a test case caught this.
+> - The pool size comes from a simple greedy upper bound already in the baseline. With the trivial bound $|K| = n$, the arc-flow model is unbuildable beyond n ≈ 60. The greedy is **not** passed to the solver as a MIP start (that stays a Phase 3 improvement).
+
+- [x] **Implement an independent solution validator (`src/validator.py`)**:
   - Given an instance and a solver output, verify from scratch:
     - Every duty is assigned to **exactly one** employee.
     - Each employee's duties form a valid directed path in the compatibility graph $G$.
     - Sum of driving times $\le W$ (FT) or $\le W/2$ (HT).
     - Spread $(e_{\text{last}} - s_{\text{first}}) \le T$ (FT) or $\le T/2$ (HT).
     - Recomputed total cost matches the solver's reported objective.
-- [ ] **Implement the baseline MILP model(s)** (`src/models/baseline.py`):
+- [x] **Implement the baseline MILP model(s)** (`src/models/baseline.py`): (AF), (CF), (CF-M).
   - Keep solver parameters at **default settings** for a clean baseline.
-  - Enforce a consistent wall-clock time limit (e.g., 300s or 600s) and fixed thread count across all runs.
-- [ ] **Sanity-test on tiny instances** ($n = 5$–$15$):
+  - Enforce a consistent wall-clock time limit (e.g., 300s or 600s) and fixed thread count across all runs. **Chosen:** 300 s, 1 thread per run, 5 runs in parallel; models over 4M non-zeros are recorded as `too_large`.
+- [x] **Sanity-test on tiny instances** ($n = 5$–$15$): [tests/test_small.py](tests/test_small.py).
   - Manually verify optimal solutions on hand-crafted edge cases (e.g., all HT optimal, all FT optimal, mixed FT+HT optimal, tight spread vs. tight working time).
-- [ ] **Build an automated experiment runner (`src/run_experiments.py`)**:
-  - Run across the full benchmark suite and log per-instance metrics to CSV: `instance`, `n`, `density`, `status`, `best_obj`, `best_bound`, `mip_gap`, `root_lp_bound`, `runtime_sec`, `bb_nodes`, `num_ft`, `num_ht`, `valid`.
+- [x] **Build an automated experiment runner (`src/run_experiments.py`)** (resumable, parallel):
+  - Run across the full benchmark suite and log per-instance metrics to CSV: `instance`, `n`, `density`, `status`, `best_obj`, `best_bound`, `mip_gap`, `root_lp_bound`, `runtime_sec`, `bb_nodes`, `num_ft`, `num_ht`, `valid`. *Refined:* `root_lp_bound` is split into `lp_bound` (pure LP relaxation, i.e. formulation strength) and `root_bound` (after the solver's root cuts).
 
 #### Step 4 — Initial Performance Analysis & Bottleneck Diagnosis
 

@@ -43,7 +43,8 @@ generated instances) and, importantly, \emph{not transitive}: on
 \texttt{csp50} there are already 599 pairs of arcs $(i,j),(j,k)$ with
 $(i,k)\notin\A$. Only $\approx 15\%$ of the pairs that are feasible by time
 alone are listed. The OR-Library set therefore tests formulation (AF) on
-general DAGs, where (CF) is only a relaxation (Section~\ref{sec:compact}).
+general DAGs, where (CF) is only a restriction of the problem, giving an
+upper bound (Section~\ref{sec:compact}).
 
 \subsection{Generator design}
 \label{sec:generator}
@@ -102,7 +103,7 @@ $t_{\max}$ & low 10, \textbf{med 40}, high 150 & Longer transfers remove
 $T$ ($W=480$) & 600, \textbf{720}, 960 & $W/T=0.8$: spread binds;
   $W/T=0.5$: working time binds. \\
 \texttt{arc\_drop} & \textbf{0}, 0.3, 0.6 & Sparser and non-transitive $G$:
-  fewer variables in (AF), but (CF) no longer applies. \\
+  fewer variables in (AF), but (CF) becomes a restriction. \\
 $L$, $\tau_0$ & \textbf{8}, \textbf{5} & Kept fixed. \\
 \bottomrule
 \end{tabular}

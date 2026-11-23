@@ -210,10 +210,12 @@ feasible for type $\tau$ if and only if no pair of $S$ lies in $C_\tau$ and
 $\sum_{i\in S}d_i\le W_\tau$. Hence (CF) is a correct model of the problem.
 \end{proposition}
 \begin{proof}
-($\Leftarrow$) Any two duties of $S$ are joined by an arc of $\A$, and since
-$G$ is acyclic and transitive, $\A$ restricted to $S$ is a strict total order.
-Listing $S$ in that order gives a sequence in which consecutive duties are
-joined by arcs, i.e.\ a path (S1). (S2) holds by assumption. For (S3), let
+($\Leftarrow$) Any two duties of $S$ are joined by an arc of $\A$, so $G$
+restricted to $S$ is an acyclic tournament. An acyclic tournament has a
+unique topological order, and any two consecutive duties in it are joined by
+an arc (the arc between them cannot go backwards). Listing $S$ in that order,
+which is the order of the start times, gives a path (S1). Transitivity is not
+needed for this direction. (S2) holds by assumption. For (S3), let
 $a=\arg\min_{i\in S}s_i$ and $b=\arg\max_{i\in S}e_i$. If $a=b$ the spread is
 $d_a\le W_\tau\le T_\tau$; otherwise $\{a,b\}\notin C_\tau$ gives
 $e_b-s_a\le T_\tau$.
@@ -222,8 +224,16 @@ joined by a path, hence by an arc by transitivity; each pair spans a sub-interva
 of the shift, so its spread is at most $T_\tau$. (S2) is explicit.
 \end{proof}
 
-Without transitivity (CF) is only a relaxation: three pairwise-compatible
-duties may admit no common order. In that case we use (AF).
+\begin{remark}
+Only direction ($\Rightarrow$) uses transitivity. On a general DAG, every
+duty set accepted by (CF) is still a feasible shift, but some feasible shifts
+are rejected: if $(1,2),(2,3)\in\A$ and $(1,3)\notin\A$, the shift
+$1\to2\to3$ is feasible, yet $\{1,3\}\in C_\tau$. On non-transitive graphs
+(CF) is therefore a \emph{restriction}: its solutions are feasible and its
+optimum is an \emph{upper bound} on $z^\ast$, possibly strictly larger. The
+exact model there is (AF). The employee pool of (CF) must then be sized from a
+solution that (CF) can represent, i.e.\ with pairwise-compatible shifts.
+\end{remark}
 
 \paragraph{Big-$M$ variant (CF-M).}
 A more ``textbook'' way to model the spread replaces the second part of

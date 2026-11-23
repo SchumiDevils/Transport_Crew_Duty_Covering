@@ -1,0 +1,134 @@
+% ===========================================================================
+% Section 3 -- Initial implementation
+% ===========================================================================
+
+\subsection{Tools and their choice}
+
+\begin{itemize}
+  \item \textbf{Language: Python 3.12.} The bottleneck is the MILP solver,
+    not model construction: building the largest model we attempt (4 million
+    non-zeros) takes a few seconds. Python lets the generator, the models,
+    the validator, the experiment runner and the plots share one code base.
+  \item \textbf{Solver: HiGHS 1.16}~\cite{huangfu2018} through its Python
+    interface \texttt{highspy}. HiGHS is a state-of-the-art open-source
+    MILP solver (branch-and-cut with presolve, cutting planes and primal
+    heuristics). It needs no licence, so all results can be reproduced
+    exactly by anyone, including the lecturer.
+  \item \textbf{Second solver: Gurobi 14} through \texttt{gurobipy}. The same
+    code can pass the models to Gurobi, which we use to cross-check the
+    results on small instances. A full academic licence was not available
+    when the baseline was run: the free licence is limited to 2000 variables
+    and constraints, which covers only the verification instances of
+    Section~\ref{sec:verification}. A comparison of solvers on the full
+    suite is a possible improvement for Section~\ref{sec:improvements}.
+\end{itemize}
+
+To guarantee that both solvers receive \emph{exactly} the same model, the
+models are not written in a solver-specific modelling language. Each builder
+fills a solver-independent container (cost vector, bounds, integrality, and
+the constraint matrix stored row-wise in sparse form) that is then passed to
+either back-end (\texttt{src/milp.py}).
+
+\subsection{Implementation of the models}
+
+The three compact formulations of Section~\ref{sec:compact} are implemented
+in \texttt{src/models/baseline.py}, exactly as written there, with no
+preprocessing, symmetry breaking or valid inequalities (these are
+improvements, Section~\ref{sec:improvements}):
+\begin{itemize}[nosep]
+  \item \textbf{(AF)}: one binary per employee and augmented arc;
+    constraints~\eqref{af:cover}--\eqref{af:spread}.
+  \item \textbf{(CF)}: binaries $y_k$, $x_{ik}$;
+    constraints~\eqref{cf:cover}--\eqref{cf:work}, with the conflict set
+    $C_\tau$ (time conflicts and pairwise spread conflicts) computed for each
+    type.
+  \item \textbf{(CF-M)}: as (CF) with only the time conflicts, plus the
+    big-$M$ spread constraints~\eqref{cfm} with $M=H$.
+\end{itemize}
+
+\paragraph{Employee pool.} The pool sizes are computed as in
+Section~\ref{sec:compact} from the cost $\bar z$ of a greedy solution:
+$U_{\mathrm F}=\min(n,\lfloor\bar z\rfloor)$ and
+$U_{\mathrm H}=\min(n_{\mathrm H},\lfloor\bar z/0.6\rfloor)$, where
+$n_{\mathrm H}$ is the number of duties with $d_i\le W/2$. The greedy
+(\texttt{src/heuristics/greedy.py}) scans duties by start time and appends
+each to the compatible open shift that ended last, opening a new shift when
+none fits. It is run once with full-time and once with half-time limits, and
+the cheaper result is kept. For (CF) and (CF-M) the greedy only builds
+pairwise-compatible shifts. This matters on non-transitive graphs: a pool
+sized from a solution that (CF) cannot represent may be too small for (CF),
+which is a restriction there (Remark after Proposition~\ref{prop:cf}). We
+found this case while testing (Section~\ref{sec:verification}). The greedy
+solution is \emph{not} given to the solver as a starting point: the baseline
+uses the solver alone.
+
+\paragraph{Size limit.} Models with more than 4 million non-zeros are not
+built and are recorded as \emph{too large}. The memory of our machine
+(16\,GB, shared by parallel runs) would not allow solving them anyway, and
+the limit itself shows how far each formulation scales.
+
+\subsection{Verification}
+\label{sec:verification}
+
+\paragraph{Independent validator.} Every solution returned by a solver is
+decoded into a list of shifts and checked by \texttt{src/validator.py},
+which uses only the instance data and none of the models. It checks that each
+duty is covered exactly once, that consecutive duties of a shift are joined
+by an arc of $G$, the working-time and total-time limits of the shift's type,
+and that the recomputed cost equals the objective reported by the solver.
+
+\paragraph{Hand-crafted instances.} Table~\ref{tab:tests} lists small
+instances whose optimal cost we derived by hand; each targets one rule of the
+problem. All three models, with both HiGHS and Gurobi, return the expected
+optimum, and the validator accepts all their solutions (54 checks). Five
+further tests confirm that the validator \emph{rejects} broken solutions: an
+HT shift over its working time, a missing duty, a duplicated duty, a wrong
+reported cost, and a shift that is not a path in $G$
+(\texttt{tests/test\_small.py}).
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Verification instances ($W=480$, $T=720$ unless stated; duty
+intervals in minutes; all time-feasible pairs are arcs unless stated).}
+\label{tab:tests}
+\begin{tabular}{@{}lp{5.0cm}p{5.0cm}r@{}}
+\toprule
+Name & Duties & What it tests & Optimum \\
+\midrule
+all\_ht & $[0,100],[110,200]$ & both fit one HT shift & 0.6 \\
+overlap & $[0,100],[50,150]$ & overlapping duties & 1.2 \\
+work\_binds & $[0,200],[210,400]$ & work $390>W/2$: one FT beats two HT & 1.0 \\
+ht\_spread & $[0,60],[600,660]$ & spread $660>T/2$: one FT & 1.0 \\
+ft\_spread & $[0,60],[700,760]$ & spread $760>T$: two HT & 1.2 \\
+mixed & $[0,200],[210,400],[50,150]$, arc $0\to1$ only & FT $\{0,1\}$ + HT $\{2\}$ & 1.6 \\
+long\_duty & $[0,300]$ & $d>W/2$: FT only & 1.0 \\
+3-partition & sizes $26,34,40,30,33,37$ back to back, $W=100$ & reduction of
+  Proposition~\ref{prop:np} ($m=2$) & 2.0 \\
+non\_transitive & $[0,50],[60,110],[120,170]$, arcs $0\to1\to2$ &
+  (AF) exact: $0.6$; (CF), (CF-M) restriction: $1.2$ & 0.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Experimental setup}
+\label{sec:setup}
+
+All runs use HiGHS with \emph{default} parameters (relative gap tolerance
+$10^{-4}$, random seed 0), one thread per run and a time limit of
+\textbf{300\,s} for the branch-and-cut. Five runs are executed in parallel on
+an Intel Core i5-12500H (12 cores) with 16\,GB of RAM under Windows~11; all
+models run under the same conditions. For each run we record
+(\texttt{src/run\_experiments.py}, one CSV row per run):
+\begin{itemize}[nosep]
+  \item model size (variables, constraints, non-zeros) and build time;
+  \item the \emph{LP bound}: optimum of the LP relaxation, solved separately
+    with a 60\,s limit, which measures the strength of the formulation;
+  \item the \emph{root bound}: dual bound at the end of the root node, after
+    presolve and HiGHS's cuts, read through a solver callback;
+  \item final status, best objective, best bound, gap, number of nodes and
+    running time;
+  \item the number of FT and HT employees and the validator verdict.
+\end{itemize}
+Gaps are measured against the lower bound $\max(0.6\rho(G),\sum_i d_i/W)$ of
+Section~\ref{sec:inst-stats} and against the greedy upper bound $\bar z$.
