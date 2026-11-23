@@ -1,0 +1,392 @@
+% ===========================================================================
+% Section 1 -- Problem description and mathematical models
+% ===========================================================================
+
+\subsection{Notation}
+\label{sec:notation}
+
+\paragraph{Duties.}
+Let $\D=\{1,\dots,n\}$ be the set of driving duties. Duty $i$ starts at time
+$s_i$ and ends at time $e_i>s_i$; its driving time is $d_i=e_i-s_i$. For every
+ordered pair $(i,j)$ of distinct duties, $t_{ij}\ge 0$ is the time needed to
+move from the place where $i$ ends to the place where $j$ starts. All times are
+integers (minutes) in the horizon $[0,H]$, with $H=\max_i e_i$.
+
+\paragraph{Compatibility graph.}
+Duty $j$ can be performed after duty $i$ by the same employee if and only if
+the employee reaches the start of $j$ in time:
+\begin{equation}\label{eq:arc}
+  (i,j)\in\A \iff e_i+t_{ij}\le s_j .
+\end{equation}
+$G=(\D,\A)$ is the (given) compatibility graph. Since $(i,j)\in\A$ implies
+$s_i<e_i\le s_j$, sorting duties by start time gives a topological order, so
+$G$ is a \emph{directed acyclic graph} (DAG).
+
+\paragraph{Employee types.}
+There are two types $\tau\in\{\mathrm{F},\mathrm{H}\}$ (full-time,
+half-time), each in unlimited supply, with
+\[
+  (W_{\mathrm F},T_{\mathrm F},c_{\mathrm F})=(W,\;T,\;1),\qquad
+  (W_{\mathrm H},T_{\mathrm H},c_{\mathrm H})=(W/2,\;T/2,\;0.6),
+\]
+where $W_\tau$ is the maximum working time, $T_\tau$ the maximum total time
+and $c_\tau$ the cost of one employee of type $\tau$ (normalised so that a
+full-time employee costs $1$).
+
+\paragraph{Shifts.}
+A \emph{shift} is the ordered sequence of duties $p=(i_1,\dots,i_m)$
+performed by one employee. It is \emph{feasible for type $\tau$} if
+\begin{enumerate}[label=(S\arabic*)]
+  \item $p$ is a path in $G$: $(i_\ell,i_{\ell+1})\in\A$ for
+        $\ell=1,\dots,m-1$;
+  \item working time: $\sum_{\ell=1}^m d_{i_\ell}\le W_\tau$;
+  \item total time (``spread''): $e_{i_m}-s_{i_1}\le T_\tau$.
+\end{enumerate}
+We write $\Omega_\tau$ for the set of feasible shifts of type $\tau$. The
+problem is to partition $\D$ into shifts, give each shift a type for which it
+is feasible, and minimise the total cost $\sum c_\tau$ over the shifts used.
+
+\subsection{Assumptions and interpretation choices}
+\label{sec:assumptions}
+
+The assignment leaves some details open. We fix them as follows (items marked
+($\ast$) are ones we would like the lecturer to confirm).
+
+\begin{enumerate}[label=(A\arabic*)]
+  \item\label{ass:work} ($\ast$) \emph{Working time counts only the driving
+    of the duties}, $\sum_{i\in p}d_i$. Deadhead movements $t_{ij}$ between
+    duties are not counted, although they do count in the total time, since
+    they lie between the start of the first duty and the end of the last.
+    If deadheads must count too, formulation~(AF) below handles it by adding
+    $t_{ij}$ to the arc weights in~\eqref{af:work}.
+  \item\label{ass:cost} \emph{Cost is a fixed amount per employee used}
+    ($1$ or $0.6$), independent of how many hours they actually work.
+  \item\label{ass:wt} \emph{$W<T$.} Working time never exceeds total time
+    (duties do not overlap), so if $W\ge T$ the working-time limit is redundant.
+    The interesting case is $W<T$, and all our instances satisfy it.
+  \item\label{ass:single} \emph{Every duty can be covered alone by a full-time
+    employee}, i.e.\ $d_i\le W$ for all $i$; otherwise the instance is
+    infeasible. Duties with $d_i>W/2$ can only be covered by full-time
+    employees.
+  \item\label{ass:tri} \emph{Triangle inequality (only where stated).}
+    Formulation~(AF) works for an arbitrary DAG $G$, as the assignment speaks
+    of a ``given'' graph. Formulation~(CF) additionally needs $G$ to be
+    transitive. This is guaranteed when
+    $t_{ij}\le t_{ik}+t_{kj}$, which holds whenever transfer times are
+    shortest-path or Euclidean travel times between locations
+    (Proposition~\ref{prop:transitive}).
+\end{enumerate}
+
+\begin{proposition}\label{prop:transitive}
+If the transfer times satisfy $t_{ik}\le t_{ij}+t_{jk}$ for all $i,j,k$, then
+$G$ is transitive.
+\end{proposition}
+\begin{proof}
+Let $(i,j),(j,k)\in\A$. Then
+$e_i+t_{ik}\le e_i+t_{ij}+t_{jk}\le s_j+t_{jk}\le e_j+t_{jk}\le s_k$,
+hence $(i,k)\in\A$.
+\end{proof}
+
+\begin{remark}
+Every half-time shift is also a feasible full-time shift
+($\Omega_{\mathrm H}\subseteq\Omega_{\mathrm F}$), so a shift in
+$\Omega_{\mathrm H}$ is always given to the cheaper half-time employee. Per
+unit of working time, full-time employees are cheaper ($1/W$ against
+$1.2/W$). Half-time employees pay off only for ``short'' shifts, those with
+working time at most $W/2$ and spread at most $T/2$, that a full-time employee
+would leave largely idle. This trade-off is what makes the mix of types
+non-trivial.
+\end{remark}
+
+\subsection{Compact formulations}
+\label{sec:compact}
+
+Both compact models use an explicit pool of candidate employees
+$\K=\K_{\mathrm F}\cup\K_{\mathrm H}$, with $|\K_\tau|=U_\tau$. Employee
+$k\in\K_\tau$ has $(W_k,T_k,c_k)=(W_\tau,T_\tau,c_\tau)$. The pool must be
+large enough not to cut off every optimal solution. $U_{\mathrm F}=n$ is
+always valid, and so is $U_{\mathrm H}=|\{i:d_i\le W/2\}|$. Given the cost
+$\bar z$ of any feasible solution (e.g.\ from a greedy heuristic), an optimal
+solution uses at most $\lfloor\bar z\rfloor$ full-time and
+$\lfloor\bar z/0.6\rfloor$ half-time employees, which gives much smaller
+pools.
+
+\subsubsection{Arc-flow formulation (AF)}
+
+Add a source $\sigma$ and a sink $\omega$ to $G$:
+$\bar\A=\A\cup\{(\sigma,i):i\in\D\}\cup\{(i,\omega):i\in\D\}$. For a node
+$v$, $\delta^-(v)$ and $\delta^+(v)$ are its entering and leaving arcs in
+$\bar\A$. The binary variable $z^k_a$ equals $1$ if employee $k$ uses
+arc $a\in\bar\A$. Arc $(\sigma,i)$ means ``$i$ is the first duty of $k$'',
+arc $(i,\omega)$ means ``$i$ is the last one''.
+\begin{align}
+\text{(AF)}\quad
+\min\;& \sum_{k\in\K} c_k \sum_{i\in\D} z^k_{\sigma i} \label{af:obj}\\
+\text{s.t.}\;
+& \sum_{k\in\K}\sum_{a\in\delta^-(i)} z^k_a = 1
+      && i\in\D \label{af:cover}\\
+& \sum_{a\in\delta^-(i)} z^k_a-\sum_{a\in\delta^+(i)} z^k_a = 0
+      && i\in\D,\;k\in\K \label{af:flow}\\
+& \sum_{i\in\D} z^k_{\sigma i}\le 1
+      && k\in\K \label{af:one}\\
+& \sum_{i\in\D} d_i\!\sum_{a\in\delta^-(i)} z^k_a \le
+      W_k\sum_{i\in\D} z^k_{\sigma i}
+      && k\in\K \label{af:work}\\
+& \sum_{i\in\D} e_i\, z^k_{i\omega}-\sum_{i\in\D} s_i\, z^k_{\sigma i}
+      \le T_k\sum_{i\in\D} z^k_{\sigma i}
+      && k\in\K \label{af:spread}\\
+& z^k_a\in\{0,1\} && a\in\bar\A,\;k\in\K. \nonumber
+\end{align}
+Constraint~\eqref{af:cover} covers each duty exactly once,
+\eqref{af:flow}--\eqref{af:one} make each employee follow at most one
+$\sigma$--$\omega$ path, and \eqref{af:work}--\eqref{af:spread} enforce the
+union rules. Because $k$ has exactly one first and one last duty when active,
+the spread can be written \emph{without big-$M$ constants}: the two sums
+in~\eqref{af:spread} pick out $e_{\text{last}}$ and $s_{\text{first}}$.
+Multiplying the right-hand sides by the activation
+$y_k:=\sum_i z^k_{\sigma i}$ adds nothing for integer solutions (an inactive
+employee has zero left-hand side) but tightens the LP relaxation.
+
+\begin{proposition}\label{prop:af}
+For any DAG $G$, the integer solutions of (AF) correspond exactly to the
+partitions of $\D$ into feasible shifts with a type assigned to each, and the
+objective~\eqref{af:obj} equals the cost of the partition.
+\end{proposition}
+\begin{proof}
+Fix $k$ with $y_k=1$. By~\eqref{af:cover}, every duty has in-flow at most $1$
+under $k$. By~\eqref{af:flow} and~\eqref{af:one}, the arcs used by $k$ form a
+flow of value $1$ from $\sigma$ to $\omega$. Since $G$ is acyclic, this flow
+contains no cycle and is a single $\sigma$--$\omega$ path, i.e.\ a path
+$p$ in $G$, which gives (S1). The left-hand side of~\eqref{af:work} is the
+driving time of $p$ (S2), and that of~\eqref{af:spread} is
+$e_{\text{last}}-s_{\text{first}}$ (S3). Inactive employees use no arc.
+By~\eqref{af:cover} the paths partition $\D$. Conversely, every partition
+into feasible typed shifts gives a feasible $z$ when the shifts are mapped
+to distinct employees of the right type (the pool is large enough by the
+choice of $U_\tau$).
+\end{proof}
+
+\begin{remark}
+The employee index cannot simply be dropped by aggregating the flow per type:
+a single integer flow decomposes into paths, but the resource
+limits~\eqref{af:work}--\eqref{af:spread} can then only be imposed on the
+total, not on each path. The type-aggregated flow is a relaxation of (AF); we
+exploit this in Proposition~\ref{prop:lp-af}.
+\end{remark}
+
+\subsubsection{Conflict formulation (CF) --- transitive graphs}
+
+When $G$ is transitive (assumption~\ref{ass:tri}), the order of the duties in
+a shift need not be modelled: a set of duties can be sequenced if and only if
+every pair of them is compatible in one direction or the other. The spread of
+a set is attained by a single pair (the first start and the last end), so it
+can be checked pairwise as well. For each type $\tau$ define the
+\emph{conflict set}
+\[
+  C_\tau=\bigl\{\{i,j\}\subseteq\D:\;
+     (i,j)\notin\A \text{ and } (j,i)\notin\A\bigr\}
+  \;\cup\;
+  \bigl\{\{i,j\}\subseteq\D:\;
+     \max(e_i,e_j)-\min(s_i,s_j)>T_\tau\bigr\}.
+\]
+With binary variables $y_k$ (employee $k$ is used) and $x_{ik}$ (duty $i$ is
+assigned to $k$):
+\begin{align}
+\text{(CF)}\quad
+\min\;& \sum_{k\in\K} c_k\, y_k \label{cf:obj}\\
+\text{s.t.}\;
+& \sum_{k\in\K} x_{ik}=1 && i\in\D \label{cf:cover}\\
+& x_{ik}\le y_k && i\in\D,\;k\in\K \label{cf:link}\\
+& x_{ik}+x_{jk}\le y_k && \{i,j\}\in C_{\tau(k)},\;k\in\K \label{cf:conflict}\\
+& \sum_{i\in\D} d_i\,x_{ik}\le W_k\,y_k && k\in\K \label{cf:work}\\
+& x_{ik},\,y_k\in\{0,1\} && i\in\D,\;k\in\K. \nonumber
+\end{align}
+A duty with $d_i>W_k$ is automatically excluded from employee $k$
+by~\eqref{cf:work}.
+
+\begin{proposition}\label{prop:cf}
+Let $G$ be transitive. A set $S\subseteq\D$ is (the duty set of) a shift
+feasible for type $\tau$ if and only if no pair of $S$ lies in $C_\tau$ and
+$\sum_{i\in S}d_i\le W_\tau$. Hence (CF) is a correct model of the problem.
+\end{proposition}
+\begin{proof}
+($\Leftarrow$) Any two duties of $S$ are joined by an arc of $\A$, and since
+$G$ is acyclic and transitive, $\A$ restricted to $S$ is a strict total order.
+Listing $S$ in that order gives a sequence in which consecutive duties are
+joined by arcs, i.e.\ a path (S1). (S2) holds by assumption. For (S3), let
+$a=\arg\min_{i\in S}s_i$ and $b=\arg\max_{i\in S}e_i$. If $a=b$ the spread is
+$d_a\le W_\tau\le T_\tau$; otherwise $\{a,b\}\notin C_\tau$ gives
+$e_b-s_a\le T_\tau$.
+($\Rightarrow$) In a feasible shift, two duties $i_\ell,i_m$ with $\ell<m$ are
+joined by a path, hence by an arc by transitivity; each pair spans a sub-interval
+of the shift, so its spread is at most $T_\tau$. (S2) is explicit.
+\end{proof}
+
+Without transitivity (CF) is only a relaxation: three pairwise-compatible
+duties may admit no common order. In that case we use (AF).
+
+\paragraph{Big-$M$ variant (CF-M).}
+A more ``textbook'' way to model the spread replaces the second part of
+$C_\tau$ by two continuous variables per employee, the start $S_k$ and end
+$E_k$ of its shift:
+\begin{equation}\label{cfm}
+  S_k\le s_i+H(1-x_{ik}),\quad
+  E_k\ge e_i\,x_{ik}\quad(i\in\D),\qquad
+  E_k-S_k\le T_k\,y_k,\qquad S_k,E_k\ge 0 .
+\end{equation}
+This saves up to $O(n^2|\K|)$ conflict constraints, but its LP relaxation is
+much weaker (with $x_{ik}$ fractional, the big-$M$ terms are nearly
+inactive). We keep (CF-M) as a reference point to measure how much the exact
+pairwise spread conflicts help.
+
+\subsection{Extended formulation: set partitioning}
+\label{sec:sp}
+
+Let $\Omega=\Omega_{\mathrm F}\cup\Omega_{\mathrm H}$, where each shift
+$p\in\Omega$ appears once with cost $c_p=0.6$ if $p\in\Omega_{\mathrm H}$ and
+$c_p=1$ otherwise (by the remark in Section~\ref{sec:assumptions}). Let
+$a_{ip}=1$ if duty $i$ belongs to $p$. With $\lambda_p=1$ if shift $p$ is
+used:
+\begin{align}
+\text{(SP)}\quad
+\min\;\sum_{p\in\Omega}c_p\lambda_p
+\quad\text{s.t.}\quad
+\sum_{p\in\Omega}a_{ip}\lambda_p=1\;\; (i\in\D),\qquad
+\lambda_p\in\{0,1\}\;\;(p\in\Omega).
+\label{sp}
+\end{align}
+
+\paragraph{Properties.}
+(SP) is the Dantzig--Wolfe reformulation of (AF) (or (CF)) in which the
+per-employee constraints \eqref{af:flow}--\eqref{af:spread} are convexified
+and identical employees are aggregated. The symmetry between employees
+disappears, and the LP bound satisfies
+$z_{\mathrm{LP}}(\mathrm{SP})\ge z_{\mathrm{LP}}(\mathrm{AF})$, because the LP
+of (SP) optimises over the convex hull of each employee's feasible shifts
+rather than over its linear relaxation~\cite{desaulniers2005column}. When $G$
+is transitive, removing a duty from a feasible shift leaves a feasible shift,
+so ``$=1$'' can be relaxed to ``$\ge 1$'' (set covering) without changing the
+optimal value. This makes the duals sign-constrained ($\pi_i\ge 0$) and column
+generation more stable.
+
+\paragraph{Column generation (outline, developed in Section~\ref{sec:improvements}).}
+$|\Omega|$ is exponential in $n$, so the LP relaxation of (SP) is solved by
+column generation. Given the duals $\pi$ of a restricted master problem, the
+pricing problem asks, for each $\tau$, for a shift of minimum reduced cost
+\[
+  \bar c_\tau=\min_{p\in\Omega_\tau}\Bigl(c_\tau-\sum_{i\in p}\pi_i\Bigr).
+\]
+This is a \emph{resource-constrained shortest path problem} (RCSPP) on the DAG
+$G$, with the two resources working time and spread. Paths in a DAG are
+elementary, so no elementarity constraints are needed. Labels
+$(\text{reduced cost},\;\text{working time},\;s_{\text{first}})$ are extended
+in topological order. A label dominates another at the same node if it is no
+worse in all three components (larger $s_{\text{first}}$ is better), and
+labels exceeding $W_\tau$ or $T_\tau$ are discarded. With integer times the
+labelling algorithm is pseudo-polynomial. An integer solution can then be
+obtained by price-and-branch (solving (SP) restricted to the generated
+columns as a MILP) or by branch-and-price.
+
+\subsection{Model size and structural properties}
+\label{sec:properties}
+
+\begin{table}[ht]
+\centering
+\caption{Size of the formulations ($n=|\D|$, $m=|\A|$, $\K$ the employee
+pool, $C=\max_\tau|C_\tau|\le n(n-1)/2$).}
+\label{tab:size}
+\begin{tabular}{lll}
+\toprule
+Model & binary variables & constraints \\
+\midrule
+(AF)   & $|\K|(m+2n)$ & $n+|\K|(n+3)$ \\
+(CF)   & $|\K|(n+1)$  & $n+|\K|(n+C+1)$ \\
+(CF-M) & $|\K|(n+1)$ (+$2|\K|$ cont.) & $n+|\K|(3n+C'+2)$, $C'\le C$ \\
+(SP)   & $|\Omega|$ (exponential) & $n$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+With $|\K|=\Theta(n)$ and dense graphs ($m=\Theta(n^2)$), both (AF) and (CF)
+have $\Theta(n^3)$ variables or constraints. This is the main reason we expect
+the compact models to stop scaling at moderate $n$.
+
+\paragraph{Symmetry.}
+Employees of the same type are interchangeable. Every solution with $f$
+full-time and $h$ half-time employees appears $\binom{U_{\mathrm F}}{f}f!\,
+\binom{U_{\mathrm H}}{h}h!$ times in (AF) and (CF), so branch-and-bound may
+explore many equivalent subtrees. (SP) is free of this symmetry.
+
+\paragraph{Strength of the LP relaxations.}
+Let $\rho(G)$ be the minimum number of vertex-disjoint paths covering all
+nodes of $G$. Every employee performs one path, so every feasible solution
+costs at least $0.6\,\rho(G)$.
+
+\begin{proposition}\label{prop:lp-af}
+$z_{\mathrm{LP}}(\mathrm{AF})\ge 0.6\,\rho(G)$.
+\end{proposition}
+\begin{proof}
+Take a feasible LP solution $z$ and set $f_a=\sum_k z^k_a$ for $a\in\bar\A$.
+Summing~\eqref{af:flow} over $k$ and using~\eqref{af:cover}, $f$ is a flow in
+$\bar G$ with in-flow exactly $1$ at every duty. Minimising its value
+$\sum_i f_{\sigma i}$ over all such flows is the LP of the minimum path cover
+problem on a DAG. After node splitting this is a network-flow problem whose
+constraint matrix is totally unimodular, so its optimum is the integer value
+$\rho(G)$~\cite{fulkerson1956}. Since $c_k\ge 0.6$,
+$\sum_k c_k\sum_i z^k_{\sigma i}\ge 0.6\sum_i f_{\sigma i}\ge 0.6\,\rho(G)$.
+\end{proof}
+
+When $G$ is transitive, $\rho(G)$ equals the largest number of pairwise
+incompatible duties, e.g.\ the maximum number of duties running
+simultaneously (Dilworth's theorem~\cite{dilworth1950}). The LP of (CF) has
+no such guarantee:
+
+\begin{proposition}\label{prop:lp-cf}
+There are instances with $z_{\mathrm{LP}}(\mathrm{CF})\le 2$ and optimal value
+at least $0.6\,q$, for any $q$.
+\end{proposition}
+\begin{proof}
+Take $q$ pairwise overlapping duties with $\sum_i d_i\le 2W$. Any integer
+solution needs $q$ employees. In the LP of (CF), take two full-time employees
+with $y_1=y_2=1$ and $x_{i1}=x_{i2}=1/2$ for every $i$:
+\eqref{cf:cover}--\eqref{cf:conflict} hold, \eqref{cf:work} reads
+$\sum_i d_i/2\le W$, and the cost is $2$.
+\end{proof}
+
+So (CF) is smaller but has a weak bound when many duties overlap, which is
+exactly the peak-hour situation. This motivates the clique inequalities
+$\sum_{i\in Q}x_{ik}\le y_k$ for sets $Q$ of pairwise conflicting duties,
+which we will test in Section~\ref{sec:improvements}. For (AF) the weakness is
+elsewhere: the resource constraints~\eqref{af:work}--\eqref{af:spread} are only
+satisfied on average by fractional paths. (SP) removes both weaknesses.
+
+\paragraph{Complexity.}
+Without the union limits ($W,T=\infty$), half-time employees are always
+preferable and the problem reduces to minimum path cover on a DAG, solvable
+in polynomial time by bipartite matching~\cite{fulkerson1956}, with optimal
+cost $0.6\,\rho(G)$. The limits are what make it hard:
+
+\begin{proposition}\label{prop:np}
+The problem is strongly NP-hard, even when $G$ is complete and transitive and
+the spread limit is never binding.
+\end{proposition}
+\begin{proof}
+Reduction from \textsc{3-Partition}~\cite{garey1979}: given $3m$ integers
+$a_i$ with $B/4<a_i<B/2$ and $\sum_i a_i=mB$, decide whether they can be split
+into $m$ triples each summing to $B$. Build duties of lengths $d_i=a_i$
+placed back to back at a single location ($t_{ij}=0$), so that every pair is
+compatible in time order, and set $W=B$, $T=4mB$ (so $T/2\ge H$ and the spread
+never binds). We claim the optimum is $\le m$ if and only if the
+\textsc{3-Partition} instance is a yes-instance. If it is, $m$ full-time
+employees cover the triples at cost $m$. Conversely, let a solution use $f$
+full-time and $h$ half-time employees with $f+0.6h\le m$. The total capacity
+must cover the total work: $fB+hB/2\ge mB$, i.e.\ $f+0.5h\ge m$. Subtracting
+gives $0.1h\le 0$, so $h=0$ and $f=m$. Then $m$ shifts of capacity $B$ hold a
+total of exactly $mB$, so each sums to exactly $B$, and since
+$B/4<a_i<B/2$ each holds exactly three duties.
+\end{proof}
+
+Since the pricing problem (RCSPP) is itself only weakly NP-hard and in
+practice cheap on DAGs, the extended formulation moves the difficulty into a
+tractable subproblem. This is the main argument for the column-generation
+approach of Section~\ref{sec:improvements}.

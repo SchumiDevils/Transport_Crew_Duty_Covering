@@ -1,0 +1,137 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+% ---------------------------------------------------------------------------
+% Notation macros (keep in sync with Section 1)
+% ---------------------------------------------------------------------------
+\newcommand{\D}{\mathcal{D}}          % set of duties
+\newcommand{\A}{\mathcal{A}}          % arcs of the compatibility graph
+\newcommand{\K}{\mathcal{K}}          % employee pool
+\newcommand{\Wft}{W}                  % FT max working time
+\newcommand{\Tft}{T}                  % FT max total time (spread)
+\newcommand{\TODO}[1]{\textcolor{red}{\textbf{TODO:} #1}}
+
+\newtheorem{proposition}{Proposition}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+\title{Model-driven Decision Methods\\[0.3em]
+       \large Project n.~2 --- Transport Crew Duty Covering}
+\author{}
+\date{\today}
+
+\begin{document}
+
+% ===========================================================================
+% Title page (mandatory content: group number, members, project number,
+% verbatim assignment)
+% ===========================================================================
+\begin{titlepage}
+  \centering
+  {\Large Università di Pisa\par}
+  \vspace{0.5em}
+  {\large Model-driven Decision Methods --- A.Y.~2026/2027\par}
+  \vspace{3em}
+  {\LARGE\bfseries Project n.~2\par}
+  \vspace{0.5em}
+  {\Large Transport Crew Duty Covering\par}
+  \vspace{3em}
+
+  {\large \textbf{Group 1}\par}
+  \vspace{1em}
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Name Surname} & \textbf{Matricola} & \textbf{E-mail} \\
+    \midrule
+    Iachim Cristian & 744069 & c.iachim@studenti.unipi.it \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{3em}
+  \begin{flushleft}
+  \textbf{Project assignment (verbatim):}
+  \end{flushleft}
+  \begin{quote}
+  \small
+  A transport company has to cover a set of driving duties with the available
+  personnel. Each employee can perform different subsets of the duties; the
+  subsets are implicitly specified under the form of a (given) ``compatibility
+  graph''. That is, for each duty its starting time and the ending time are
+  given; furthermore, for any pair of duties it is known the time that it takes
+  to move from the place where the first one ends to the place where the other
+  one starts, so that it is known whether or not it is possible for the same
+  employee to perform both in sequence. Union regulations set for each employee
+  a maximum working time (sum of the driving time) and a maximum total time
+  (difference between the start of his first duty and the end of its last one).
+  Employees can be both half-time or full-time; the former have maximum working
+  time and total time half than the latter, but cost 60\% as much. The problem
+  is to assign a feasible set of duties to an appropriate number of employees
+  (of which there is an unlimited supply, of either type) in order to have each
+  duty performed by exactly one employee, at minimum total cost.
+  \end{quote}
+
+  \vfill
+  {\small Report version: Phase 1 draft (Sections 1--2) --- \today\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ===========================================================================
+\section{Problem description and mathematical models}
+\label{sec:model}
+% Milestone 1
+% ===========================================================================
+
+\input{sections/model}
+
+% ===========================================================================
+\section{Instances and generator}
+\label{sec:instances}
+% Milestone 1
+% ===========================================================================
+\TODO{Literature/benchmark search, generator design, difficulty parameters,
+benchmark suite summary.}
+
+% ===========================================================================
+\section{Initial implementation}
+\label{sec:implementation}
+% Milestone 2
+% ===========================================================================
+\TODO{Tools, language, solver, and why.}
+
+% ===========================================================================
+\section{Initial computational experiments}
+\label{sec:baseline-exp}
+% Milestone 2
+% ===========================================================================
+\TODO{Setup, tables/plots, bottleneck analysis.}
+
+% ===========================================================================
+\section{Proposed improvements}
+\label{sec:improvements}
+% Milestone 3
+% ===========================================================================
+\TODO{Mathematical and algorithmic description of the improvements.}
+
+% ===========================================================================
+\section{Comparative computational evaluation}
+\label{sec:comparison}
+% Milestone 3
+% ===========================================================================
+\TODO{Apples-to-apples comparison, performance profiles, conclusions.}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

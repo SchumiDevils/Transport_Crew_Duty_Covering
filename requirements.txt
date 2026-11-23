@@ -1,0 +1,8 @@
+# Modeling / solvers
+gurobipy>=12.0        # main MILP solver (needs a free academic license: https://www.gurobi.com/academia/)
+highspy>=1.7          # open-source MILP/LP solver, fallback and cross-check
+
+# Data / experiments / plots
+numpy
+pandas
+matplotlib
