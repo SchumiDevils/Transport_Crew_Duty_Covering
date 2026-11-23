@@ -2,7 +2,7 @@
 
 **Course:** Model-driven Decision Methods (Università di Pisa)  
 **Track:** Normal Project  
-**Status:** Phase 0 done (except Python install + names) → next: Phase 1
+**Status:** Phase 1 written (Sections 1–2) → next: send Milestone 1 e-mail, then Phase 2
 
 > **Source documents.** The binding document for this project is *“Model-driven Decision Methods: Project”* (`projects-proposals.pdf`, steps 1–6 + report contents). The other file, `projects-instructions.pdf`, is the guide of a **different course** (*Optimization for Data Science, 784AA*). Its general workflow advice (partial reports, plagiarism, email-only communication) is a good fit, but its convergence-theory requirements (§3.3) do **not** apply here. Where the two disagree, follow the MDDM document and ask the lecturer.
 
@@ -62,7 +62,7 @@ The course recommends delivering the report in **three incremental phases** via 
   - **Language:** Python 3.12.
   - **Modeling + solver:** `gurobipy` + Gurobi (main solver; free *named academic license* from gurobi.com/academia, activated on the university network or VPN). Use `highspy` (HiGHS, open source) as a second solver to cross-check results.
   - Pinned in [requirements.txt](requirements.txt).
-- [ ] **Install the environment** (still to do: no Python on this machine yet):
+- [x] **Install the environment** (Python 3.12.10 + `.venv` done; **still to do:** Gurobi academic key, as without it gurobipy is size-limited):
   ```powershell
   winget install Python.Python.3.12
   py -3.12 -m venv .venv; .\.venv\Scripts\Activate.ps1
@@ -72,7 +72,7 @@ The course recommends delivering the report in **three incremental phases** via 
 - [x] **Initialize workspace & LaTeX report template**:
   - [x] Folder layout created (`data/`, `src/models`, `src/heuristics`, `results/raw`, `results/plots`, `report/`).
   - [x] [report/main.tex](report/main.tex): title page with project number + verbatim statement, six section stubs that follow the MDDM report contents. It builds with `latexmk -pdf main.tex`.
-  - [ ] Fill in **group number, names, matricola, e-mails** (marked `TODO` in red in the PDF).
+  - [x] Fill in **group number, names, matricola, e-mails**.
   - [x] Local Git repo initialised (`main` branch, `.gitignore`). If you add a remote (GitHub/GitLab), make it **private**.
 
 ---
@@ -106,9 +106,18 @@ The course recommends delivering the report in **three incremental phases** via 
 
 #### Step 2 — Benchmark Instances & Scalable Generator
 
-- [ ] **Search for existing instances**:
+> **Step 2 status: done** — report §2 in [report/sections/instances.tex](report/sections/instances.tex). Reproduce everything (from the project root, venv active):
+> ```powershell
+> python data/generator.py --suite   # 66 generated instances -> data/instances/{scale,factor}
+> python data/convert_orlib.py       # 10 OR-Library files    -> data/instances/orlib
+> python data/summarize.py           # results/instances_summary.csv + report/tables/*.tex
+> python data/plot_instances.py      # report/figures/instances.pdf
+> ```
+
+- [x] **Search for existing instances**:
   - Check public transport / crew scheduling benchmarks (e.g., Bus Driver Scheduling / Vehicle Scheduling instances) to see if any can be adapted.
-- [ ] **Design and implement a scalable generator (`data/generator.py`)**:
+  - **Result:** the OR-Library crew scheduling set (Beasley & Cao 1996, `csp50`–`csp500`) is adopted ([data/orlib/](data/orlib/), converted with W = 480, T = 720). Its graphs are given explicitly and are **not transitive**, so only (AF) is valid on them. BDSP (Kletzander & Musliu) was rejected: its rules are too different from ours, and the real data are not public.
+- [x] **Design and implement a scalable generator (`data/generator.py`)**:
   - Make it deterministic via configurable random seeds and save instances in a clean format (JSON or plain text).
   - Include parameters that **realistically control problem difficulty**:
     1. **Instance size ($n = |D|$):** e.g., Tiny ($10$–$15$ for verification), Small ($20$–$40$), Medium ($50$–$100$), Large ($150$–$300+$).
@@ -116,7 +125,10 @@ The course recommends delivering the report in **three incremental phases** via 
     3. **Duty durations ($d_i$):** short vs. long duties, including mixes that make FT vs. HT trade-offs non-trivial (e.g., awkward remainders where HT is cheaper than a lightly loaded FT shift).
     4. **Spatial / Transfer matrix ($t_{ij}$):** e.g., $L$ depots/terminals in 2D space with asymmetric or Euclidean travel times, controlling **compatibility graph density**.
     5. **Union regulation tightness ($W, T$):** ratio $W / T$ (tight driving limit vs. tight spread limit) so both constraints actively bind in different instance classes.
-- [ ] **Generate a structured benchmark suite** spanning sizes and difficulty regimes, and document its summary statistics (graph density, average duty length, theoretical minimum FT/HT bounds).
+    - *Finding:* transfer times hardly change density, because duties (~2 h) are much longer than transfers. `arc_drop` (randomly removing arcs) is therefore the direct density control.
+- [x] **Generate a structured benchmark suite** spanning sizes and difficulty regimes, and document its summary statistics (graph density, average duty length, theoretical minimum FT/HT bounds).
+  - 76 instances: **scale** (n = 10…200 × 3 seeds), **factor** (n = 40, one parameter varied at a time × 3 seeds), **orlib** (n = 50…500). Byte-identical when regenerated.
+  - Stats per instance: density, effective density (arcs within T), HT-eligible share, max concurrency, ρ(G), and the lower bounds 0.6ρ(G) and Σd/W.
 
 > **Milestone 1 (Email Lecturer):** Write Sections 1–2 of the PDF report (problem description, mathematical formulation(s), instance generator design & dataset summary) and send it to the lecturer for early review before running large-scale experiments.
 
