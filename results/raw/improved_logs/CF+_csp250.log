@@ -1,0 +1,48 @@
+MIP has 313146 rows; 47067 cols; 3333261 nonzeros; 47067 integer variables (47067 binary)
+Coefficient ranges:
+  Matrix  [6e-01, 5e+02]
+  Cost    [6e-01, 1e+00]
+  Bound   [1e+00, 1e+00]
+  RHS     [1e+00, 1e+02]
+Presolving model
+313146 rows, 47067 cols, 3333261 nonzeros 0s
+57612 rows, 46975 cols, 4401647 nonzeros 70s
+   Considered 92 / 46975 binaries; 92 probed  (rate 54/ms => expected probing finish time 2739s) 188s
+   Considered 167 / 46975 binaries; 167 probed  (rate 66/ms => expected probing finish time 3321s) 193s
+   Considered 242 / 46975 binaries; 242 probed  (rate 67/ms => expected probing finish time 3361s) 198s
+57611 rows, 46975 cols, 4404480 nonzeros 70s
+Presolve reductions: rows 57611(-255535); columns 46975(-92); nonzeros 4404480(+1071219) 
+Objective function is integral with scale 5
+
+Solving MIP model with:
+   57611 rows
+   46975 cols (46975 binary, 0 integer, 0 implied int., 0 continuous, 0 domain fixed)
+   4404480 nonzeros
+   Thread count: 12 available cores, 16 logical processors, using up to 1 workers across 1 threads.
+
+Src: B => Branching; C => Central rounding; F => Feasibility pump; H => Heuristic;
+     I => Shifting; J => Feasibility jump; L => Sub-MIP; P => Empty MIP; R => Randomized rounding;
+     S => Solve LP; T => Evaluate node; U => Unbounded; X => User solution; Y => HiGHS solution;
+     Z => ZI Round; l => Trivial lower; p => Trivial point; u => Trivial upper; z => Trivial zero
+
+        Nodes      |    B&B Tree     |            Objective Bounds              |  Dynamic Constraints |       Work      
+Src  Proc. InQueue |  Leaves   Expl. | BestBound       BestSol              Gap |   Cuts   InLp Confl. | LpIters     Time
+
+         0       0         0   0.00%   0               inf                  inf        0      0      0         0   307.0s
+         0       0         0   0.00%   0               inf                  inf        0      0      8         0   307.6s
+
+Solving report
+  Status            Time limit reached
+  Primal bound      inf
+  Dual bound        0
+  Gap               inf
+  P-D integral      307.58
+  Solution status   -
+  Timing            307.58
+                    258.68 (Presolve)
+                    48.90 (Solve)
+                    0.00 (Postsolve)
+  Max sub-MIP depth 0
+  Nodes             0
+  Repair LPs        0
+  LP iterations     0

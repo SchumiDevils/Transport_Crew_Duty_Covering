@@ -4,9 +4,14 @@ Runs are executed in parallel worker processes (each solver run uses
 `--threads` threads). Already completed (instance, model) pairs found in the
 output CSV are skipped, so an interrupted experiment can be resumed.
 
-Example (baseline of Section 4):
+Examples (Sections 4 and 6):
     python src/run_experiments.py --models AF CF CFM --groups scale factor orlib \
         --time-limit 300 --workers 5 --out results/raw/baseline.csv
+    python src/run_experiments.py --models CF+ SP --groups scale factor orlib \
+        --time-limit 300 --workers 5 --out results/raw/improved.csv
+    python src/run_experiments.py --models CF+noclq CF+chain CF+nosym CF+nostart \
+        --groups scale --min-n 40 --max-n 100 --time-limit 300 --workers 5 \
+        --out results/raw/ablation.csv
 """
 from __future__ import annotations
 
@@ -24,7 +29,9 @@ sys.path.insert(0, str(ROOT))
 FIELDS = ["instance", "group", "model", "solver", "n", "arcs", "density", "transitive", "lb",
           "greedy_ub", "UF", "UH", "n_vars", "n_int", "n_rows", "nnz", "build_sec", "status",
           "obj", "bound", "gap", "lp_bound", "lp_sec", "root_bound", "nodes", "runtime_sec",
-          "num_ft", "num_ht", "valid", "errors", "time_limit", "threads"]
+          "num_ft", "num_ht", "valid", "errors", "time_limit", "threads",
+          # column generation only (Section 5)
+          "cg_iters", "cg_sec", "cg_cols", "enum_cols", "pb_obj"]
 
 
 def _job(args):
@@ -42,6 +49,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", nargs="+", default=["AF", "CF", "CFM"])
     ap.add_argument("--groups", nargs="+", default=["scale", "factor", "orlib"])
+    ap.add_argument("--min-n", type=int, default=0)
     ap.add_argument("--max-n", type=int, default=10**9)
     ap.add_argument("--time-limit", type=float, default=300)
     ap.add_argument("--threads", type=int, default=1)
@@ -65,7 +73,7 @@ def main() -> None:
     for g in a.groups:
         for p in sorted((ROOT / "data" / "instances" / g).glob("*.json"),
                         key=lambda p: (json.loads(p.read_text())["n"], p.name)):
-            if json.loads(p.read_text())["n"] > a.max_n:
+            if not a.min_n <= json.loads(p.read_text())["n"] <= a.max_n:
                 continue
             for mdl in a.models:
                 if (p.stem, mdl) not in done:
@@ -85,7 +93,7 @@ def main() -> None:
                 print(row["_tb"], file=sys.stderr)
             w.writerow(row)
             f.flush()
-            print(f"[{k}/{len(jobs)} {time.time() - t0:7.0f}s] {row['model']:4s} {row['instance']:24s} "
+            print(f"[{k}/{len(jobs)} {time.time() - t0:7.0f}s] {row['model']:10s} {row['instance']:24s} "
                   f"{row.get('status')} obj={row.get('obj', '')} valid={row.get('valid', '')}", flush=True)
 
 

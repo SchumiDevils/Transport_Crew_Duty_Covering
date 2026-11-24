@@ -2,7 +2,7 @@
 
 **Course:** Model-driven Decision Methods (Università di Pisa)  
 **Track:** Normal Project  
-**Status:** Phase 2 written (Sections 1–4) → next: send Milestone 2 e-mail, then Phase 3
+**Status:** Phase 3 written (Sections 1–6, full draft) → next: send Milestone 3 e-mail (final approval), then the code archive
 
 > **Source documents.** The binding document for this project is *“Model-driven Decision Methods: Project”* (`projects-proposals.pdf`, steps 1–6 + report contents). The other file, `projects-instructions.pdf`, is the guide of a **different course** (*Optimization for Data Science, 784AA*). Its general workflow advice (partial reports, plagiarism, email-only communication) is a good fit, but its convergence-theory requirements (§3.3) do **not** apply here. Where the two disagree, follow the MDDM document and ask the lecturer.
 
@@ -191,27 +191,45 @@ The course recommends delivering the report in **three incremental phases** via 
 
 Select **at least one** (ideally 2–3 complementary or progressively stronger) improvement strategies directly targeting the bottlenecks found in Step 4:
 
-- [ ] **Track A — Model Strengthening & Preprocessing (Compact MILP)**
+- [x] **Track A — Model Strengthening & Preprocessing (Compact MILP)** → **(CF+)** in [src/models/improved.py](src/models/improved.py)
   - **Graph & domain preprocessing:** Remove HT-infeasible duties ($d_i > W/2$) and infeasible arcs/pairs where $e_j - s_i > T_k$ or $d_i + d_j > W_k$; compute a tight upper bound on $|K_{\text{FT}}|$ and $|K_{\text{HT}}|$ via a fast greedy heuristic.
   - **Symmetry breaking:** Enforce non-increasing employee activation ($y_1 \ge y_2 \ge \dots$) and lexicographic / minimum-duty-index ordering (e.g., employee $k$ can only be assigned duty $i$ if $i \ge k$, or ordered by earliest start time).
   - **Valid inequalities:** Add clique inequalities on the incompatibility graph (duties overlapping in time cannot share an employee), disaggregated constraints, or replace Big-$M$ spread constraints with pairwise conflict cuts.
-- [ ] **Track B — Reformulation via Column Generation / Branch-and-Price (High-Impact Approach)**
+- [x] **Track B — Reformulation via Column Generation / Branch-and-Price (High-Impact Approach)** → **(SP-CG)** in [src/models/colgen.py](src/models/colgen.py)
   - **Restricted Master Problem (RMP):** Linear relaxation of the Set Partitioning / Set Covering formulation initialized with heuristic shifts.
   - **Pricing Subproblems (one for FT, one for HT):** Find a feasible shift (path in DAG $G$) with negative reduced cost $c_{\text{type}} - \sum_{i \in p} \pi_i < 0$ subject to working time and spread limits — a **Resource-Constrained Shortest Path Problem (RCSPP)** solvable via dynamic programming / labeling along a topological ordering of $G$.
   - **Integer solutions:** Implement either **Price-and-Branch** (solve root LP via CG, then solve RMP as an integer program — simple and often near-optimal) or full **Branch-and-Price** (with Ryan-Foster branching on duty pairs).
-- [ ] **Track C — Heuristic Warm-Starts & Solver Parameter Tuning**
+- [x] **Track C — Heuristic Warm-Starts & Solver Parameter Tuning** (partly: greedy warm start via an improving cut; no parameter tuning)
   - Implement a fast constructive + local-search heuristic (e.g., greedy path packing / shift merging/splitting) to feed a strong initial MIP start to the solver.
   - Systematically test targeted solver parameters (e.g., symmetry level, cut aggressiveness, MIP focus, branching priorities on $y_k$ variables) and measure their isolated impact.
 
 #### Step 6 — Comparative Computational Evaluation
 
-- [ ] **Run controlled apples-to-apples experiments**:
+- [x] **Run controlled apples-to-apples experiments**:
   - Evaluate the baseline and each proposed improvement on the **exact same benchmark instances**, hardware, thread limit, and time limit.
   - Verify every solution with `validator.py` and confirm matching optimal objectives on all instances solved to optimality by both methods.
-- [ ] **Analyze & visualize the impact**:
+- [x] **Analyze & visualize the impact**:
   - Report speedup factors, reduction in MIP gap, root LP gap improvement, B&B node reduction, and increase in maximum solvable instance size.
   - Use concise, readable visuals: performance profiles (Dolan–Moré), log-scale runtime vs. $n$ curves, root gap comparison bar charts, and compact summary tables (avoid multi-page raw number dumps).
   - Clearly discuss **trade-offs** (e.g., overhead of CG on small instances vs. massive gains on large instances, or which improvement contributes most).
+
+> **Phase 3 status (done):** report §5 [report/sections/improvements.tex](report/sections/improvements.tex), §6 [report/sections/comparison.tex](report/sections/comparison.tex). Reproduce (~1.5 h): 
+> ```powershell
+> python tests/test_small.py   # now also SP, all CF+ variants, 8 random instances
+> python src/run_experiments.py --models CF+ SP --groups scale factor orlib --time-limit 300 --threads 1 --workers 5 --out results/raw/improved.csv
+> python src/run_experiments.py --models CF+noclq CF+chain CF+nosym CF+nostart --groups scale --min-n 40 --max-n 100 --time-limit 300 --threads 1 --workers 5 --out results/raw/ablation.csv
+> python src/analyze_improved.py   # report/tables/cmp_*.tex, report/figures/cmp_*.pdf
+> ```
+> - **(SP-CG)** (column generation + price-and-branch + reduced-cost enumeration, exact on any DAG): 70/76 solved vs 47 for the best baseline, ~18× faster (shifted geo. mean), best known solution on all 76, all scale instances up to n = 200, OR-Lib csp50–csp200 proved optimal (first time), gaps 1.2–3.1 % on csp250–500. LP bound 0.1 % from optimum.
+> - **(CF+)** (clique cover, symmetry breaking, improving cut): 49/76 solved, 2–7× smaller than (CF); the ablation shows symmetry breaking is the only component that clearly helps.
+> - **Corrections to the plan found in Phase 3:**
+>   - Objective rounding to multiples of 0.2 is **not** an improvement: HiGHS already detects the integral objective (scale 5). §4.2 corrected.
+>   - The time-conflict graph is an interval graph only with zero transfer times; with transfers it is co-comparability (possibly exponentially many maximal cliques) → interval cliques + greedy clique cover.
+>   - (SP) must keep "= 1" rows on non-transitive graphs (covering is only valid when G is transitive).
+>   - Price-and-branch alone proves nothing → reduced-cost enumeration (Prop. 7) gives exactness without full branch-and-price.
+>   - **HiGHS 1.16 MIP-start bug**: `setSolution` + presolve drops the objective offset and returns wrong "optimal" values (9.6 reported as 8.8). Replaced by a solver-independent improving cut `c·x ≤ z̄ − 0.2`.
+>   - HiGHS overran the time limit by up to 3 min on MILPs with > 0.5 M columns → enumeration capped at 250 k columns; max SP time now 301 s.
+>   - The O(n) "spread chain" has the same LP bound but a much weaker root (hides conflicts from HiGHS's clique table) → kept only as an ablation variant.
 
 > **Milestone 3 (Email Lecturer):** Complete Sections 5–6 of the PDF report (description of improvements + comparative evaluation & conclusions) and submit the full report for final approval.
 
@@ -222,13 +240,13 @@ Select **at least one** (ideally 2–3 complementary or progressively stronger) 
 ### A. Final Report (PDF, sent via email first)
 
 Verify that the PDF report includes all mandatory items:
-- [ ] **Title page:** Group number, member names/matricola/emails, project number, and verbatim problem statement.
+- [x] **Title page:** Group number, member names/matricola/emails, project number, and verbatim problem statement.
 - [x] **Section 1:** Description of the optimization problem and mathematical model(s) + notation & theoretical discussion.
 - [x] **Section 2:** Description of the instances and scalable generator design.
 - [x] **Section 3:** Description of the initial implementation (tools, language, solver) with justification of choices.
 - [x] **Section 4:** First computational experiments with clean tables/graphs and bottleneck analysis.
-- [ ] **Section 5:** Description of the proposed improvements (mathematical & algorithmic details).
-- [ ] **Section 6:** Comparative computational evaluation proving the effectiveness of the improvements.
+- [x] **Section 5:** Description of the proposed improvements (mathematical & algorithmic details).
+- [x] **Section 6:** Comparative computational evaluation proving the effectiveness of the improvements.
 - [ ] Originality check: all text and code are your own work, with any external references properly cited.
 
 ### B. Code & Supporting Archive (`.zip` or `.tgz`; MDDM says one archive together with the final report. Confirm the order with the lecturer.)

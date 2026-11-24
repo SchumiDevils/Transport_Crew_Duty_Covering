@@ -1,0 +1,1 @@
+{"instance": "scale_n015_s2", "model": "CF+", "objective": 6.0, "shifts": [{"type": "FT", "duties": [1, 6, 7, 9]}, {"type": "FT", "duties": [2, 4, 12]}, {"type": "FT", "duties": [3, 5, 8]}, {"type": "HT", "duties": [0]}, {"type": "HT", "duties": [10]}, {"type": "HT", "duties": [11]}, {"type": "HT", "duties": [13]}, {"type": "HT", "duties": [14]}]}

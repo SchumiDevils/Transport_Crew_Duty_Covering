@@ -1,0 +1,49 @@
+MIP has 184 rows; 89 cols; 674 nonzeros; 89 integer variables (89 binary)
+Coefficient ranges:
+  Matrix  [6e-01, 5e+02]
+  Cost    [6e-01, 1e+00]
+  Bound   [1e+00, 1e+00]
+  RHS     [1e+00, 4e+00]
+Presolving model
+184 rows, 89 cols, 674 nonzeros 0s
+46 rows, 88 cols, 305 nonzeros 0s
+41 rows, 65 cols, 223 nonzeros 0s
+34 rows, 65 cols, 221 nonzeros 0s
+Presolve reductions: rows 34(-150); columns 65(-24); nonzeros 221(-453) 
+Objective function is integral with scale 5
+
+Solving MIP model with:
+   34 rows
+   65 cols (65 binary, 0 integer, 0 implied int., 0 continuous, 0 domain fixed)
+   221 nonzeros
+   Thread count: 12 available cores, 16 logical processors, using up to 1 workers across 1 threads.
+
+Src: B => Branching; C => Central rounding; F => Feasibility pump; H => Heuristic;
+     I => Shifting; J => Feasibility jump; L => Sub-MIP; P => Empty MIP; R => Randomized rounding;
+     S => Solve LP; T => Evaluate node; U => Unbounded; X => User solution; Y => HiGHS solution;
+     Z => ZI Round; l => Trivial lower; p => Trivial point; u => Trivial upper; z => Trivial zero
+
+        Nodes      |    B&B Tree     |            Objective Bounds              |  Dynamic Constraints |       Work      
+Src  Proc. InQueue |  Leaves   Expl. | BestBound       BestSol              Gap |   Cuts   InLp Confl. | LpIters     Time
+
+         0       0         0   0.00%   1.6             inf                  inf        0      0      0         0     0.0s
+         1       0         1 100.00%   inf             inf                  inf        0      0      0        59     0.0s
+
+Solving report
+  Status            Infeasible
+  Primal bound      inf
+  Dual bound        inf
+  Gap               inf
+  P-D integral      0.02
+  Solution status   -
+  Timing            0.02
+                    0.01 (Presolve)
+                    0.02 (Solve)
+                    0.00 (Postsolve)
+  Max sub-MIP depth 0
+  Nodes             1
+  Repair LPs        0
+  LP iterations     59
+                    0 (strong br.)
+                    0 (separation)
+                    0 (heuristics)

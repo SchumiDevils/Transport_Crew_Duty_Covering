@@ -11,13 +11,16 @@ from __future__ import annotations
 import math
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from src.heuristics.greedy import greedy  # noqa: E402
 from src.instance import Instance  # noqa: E402
-from src.milp import solve  # noqa: E402
+from src.milp import solve, solve_from  # noqa: E402
 from src.models.baseline import MODELS  # noqa: E402
+from src.models.colgen import STEP, solve_sp  # noqa: E402
+from src.models.improved import VARIANTS, build_cfp  # noqa: E402
 from src.solve import pool_sizes  # noqa: E402
 from src.validator import validate  # noqa: E402
 
@@ -61,14 +64,64 @@ def check(inst, expected: dict, solvers) -> int:
                 print(f"  greedy INVALID on {inst.name}")
                 fails += 1
             UF, UH = pool_sizes(inst, g["objective"])
-            milp, decode = MODELS[model](inst, UF, UH)
-            r = solve(milp, solver, time_limit=60)
-            sol = {"objective": r.obj, "shifts": decode(r.x)}
+            if model == "SP":
+                if solver != "highs":
+                    continue
+                res = solve_sp(inst, 60)
+                r = SimpleNamespace(status=res["status"], obj=res["obj"])
+                sol = {"objective": r.obj, "shifts": res["shifts"]}
+            elif model in VARIANTS:
+                milp, decode, start = build_cfp(inst, UF, UH, **VARIANTS[model])
+                if model == "CF+nostart":
+                    r = solve(milp, solver, time_limit=60)
+                else:
+                    r = solve_from(milp, start(g), STEP, solver, time_limit=60)
+                sol = {"objective": r.obj, "shifts": decode(r.x)}
+            else:
+                milp, decode = MODELS[model](inst, UF, UH)
+                r = solve(milp, solver, time_limit=60)
+                sol = {"objective": r.obj, "shifts": decode(r.x)}
             errs = validate(inst, sol)
             ok = r.status == "optimal" and math.isclose(r.obj, exp, abs_tol=1e-6) and not errs
             fails += not ok
-            print(f"  {'ok  ' if ok else 'FAIL'} {inst.name:16s} {model:3s} {solver:6s} "
+            print(f"  {'ok  ' if ok else 'FAIL'} {inst.name:16s} {model:10s} {solver:6s} "
                   f"obj={r.obj:.2f} expected={exp:.2f} greedy={g['objective']:.2f} {errs or ''}")
+    return fails
+
+
+def check_random(solvers) -> int:
+    """Generated instances (n = 10..25): every exact method must agree with (AF),
+    and CF+ (all variants) with (CF). Catches errors the hand-made cases miss."""
+    from data.generator import generate
+    fails = 0
+    print("random instances: SP = AF; CF+ variants = CF")
+    for seed in range(1, 9):
+        n = 10 + 2 * seed
+        kw = {"arc_drop": 0.3} if seed % 3 == 0 else {}      # some non-transitive graphs
+        inst = generate(seed, f"rand{seed}", n=n, **kw)
+        vals = {}
+        for model in ["AF", "CF", "SP", *VARIANTS]:
+            g = greedy(inst, pairwise=model not in ("AF", "SP"))
+            UF, UH = pool_sizes(inst, g["objective"])
+            if model == "SP":
+                res = solve_sp(inst, 60)
+                vals[model], sh = res["obj"], res["shifts"]
+            else:
+                if model in VARIANTS:
+                    milp, decode, start = build_cfp(inst, UF, UH, **VARIANTS[model])
+                    r = (solve(milp, "highs", time_limit=60) if model == "CF+nostart"
+                         else solve_from(milp, start(g), STEP, "highs", time_limit=60))
+                else:
+                    milp, decode = MODELS[model](inst, UF, UH)
+                    r = solve(milp, "highs", time_limit=120)
+                vals[model], sh = r.obj, decode(r.x)
+            cost = round(sum(1.0 if s["type"] == "FT" else 0.6 for s in sh), 6)
+            fails += bool(validate(inst, {"objective": cost, "shifts": sh}))
+        ok = (math.isclose(vals["SP"], vals["AF"], abs_tol=1e-6)
+              and all(math.isclose(vals[m], vals["CF"], abs_tol=1e-6) for m in VARIANTS))
+        fails += not ok
+        print(f"  {'ok  ' if ok else 'FAIL'} {inst.name} n={n} arc_drop={kw.get('arc_drop', 0)} "
+              + " ".join(f"{m}={v:.1f}" for m, v in vals.items()))
     return fails
 
 
@@ -82,9 +135,11 @@ def main() -> None:
     fails = 0
     for inst, opt, why in CASES:
         print(f"{inst.name}: {why}")
-        fails += check(inst, {"AF": opt, "CF": opt, "CFM": opt}, solvers)
-    print("non_transitive: AF exact (0.6), CF/CFM restriction (1.2)")
-    fails += check(NONTRANS, {"AF": 0.6, "CF": 1.2, "CFM": 1.2}, solvers)
+        fails += check(inst, {m: opt for m in ["AF", "CF", "CFM", "SP", *VARIANTS]}, solvers)
+    print("non_transitive: AF and SP exact (0.6), CF-type restriction (1.2)")
+    fails += check(NONTRANS, {"AF": 0.6, "SP": 0.6, "CF": 1.2, "CFM": 1.2,
+                              **{m: 1.2 for m in VARIANTS}}, solvers)
+    fails += check_random(solvers)
     # The validator must reject broken solutions (negative tests).
     inst = CASES[2][0]  # work_binds: duties 0 (200 min) -> 1 (190 min)
     bad = {

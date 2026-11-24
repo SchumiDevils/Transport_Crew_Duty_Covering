@@ -1,0 +1,108 @@
+MIP has 217468 rows; 8036 cols; 659803 nonzeros; 8036 integer variables (8036 binary)
+Coefficient ranges:
+  Matrix  [6e-01, 5e+02]
+  Cost    [6e-01, 1e+00]
+  Bound   [1e+00, 1e+00]
+  RHS     [1e+00, 4e+01]
+Presolving model
+217468 rows, 8036 cols, 659803 nonzeros 0s
+4124 rows, 8035 cols, 150505 nonzeros 6s
+4082 rows, 7943 cols, 149454 nonzeros 8s
+Presolve reductions: rows 4082(-213386); columns 7943(-93); nonzeros 149454(-510349) 
+Objective function is integral with scale 5
+
+Solving MIP model with:
+   4082 rows
+   7943 cols (7943 binary, 0 integer, 0 implied int., 0 continuous, 0 domain fixed)
+   149454 nonzeros
+   Thread count: 12 available cores, 16 logical processors, using up to 1 workers across 1 threads.
+
+Src: B => Branching; C => Central rounding; F => Feasibility pump; H => Heuristic;
+     I => Shifting; J => Feasibility jump; L => Sub-MIP; P => Empty MIP; R => Randomized rounding;
+     S => Solve LP; T => Evaluate node; U => Unbounded; X => User solution; Y => HiGHS solution;
+     Z => ZI Round; l => Trivial lower; p => Trivial point; u => Trivial upper; z => Trivial zero
+
+        Nodes      |    B&B Tree     |            Objective Bounds              |  Dynamic Constraints |       Work      
+Src  Proc. InQueue |  Leaves   Expl. | BestBound       BestSol              Gap |   Cuts   InLp Confl. | LpIters     Time
+
+         0       0         0   0.00%   0               inf                  inf        0      0      0         0    10.6s
+         0       0         0   0.00%   34.11629046     inf                  inf        0      0      6     34991    28.6s
+         0       0         0   0.00%   34.27237687     inf                  inf      298     39     15     40676    33.7s
+         0       0         0   0.00%   34.35678688     inf                  inf      794     74    106     44818    39.4s
+         0       0         0   0.00%   34.41336315     inf                  inf     1256    139    124     50089    45.1s
+         0       0         0   0.00%   34.44226271     inf                  inf     1774    193    132     53573    50.1s
+         0       0         0   0.00%   34.47450746     inf                  inf     1976    223    137     57415    65.5s
+         0       0         0   0.00%   34.53447222     inf                  inf     2236    273    145     62096    71.2s
+         0       0         0   0.00%   34.57007892     inf                  inf     2436    299    155     66053    76.5s
+         0       0         0   0.00%   34.57501228     inf                  inf     2728    306    159     66555    86.3s
+         0       0         0   0.00%   34.60152675     inf                  inf     2896    313    177     71685    91.9s
+         0       0         0   0.00%   34.61065842     inf                  inf     3206    298    192     74666   103.6s
+         0       0         0   0.00%   34.63603937     inf                  inf     2999    303    206     78697   109.1s
+         0       0         0   0.00%   34.64399802     inf                  inf     3560    318    230     81208   119.1s
+         0       0         0   0.00%   34.65786417     inf                  inf     3588    343    244     84302   124.2s
+         0       0         0   0.00%   34.68527717     inf                  inf     3487    356    256     90974   131.1s
+         0       0         0   0.00%   34.69686548     inf                  inf     3347    350    262     96281   136.1s
+         0       0         0   0.00%   34.71556117     inf                  inf     3181    337    272    101522   142.3s
+         0       0         0   0.00%   34.72755431     inf                  inf     2940    376    286    106262   147.5s
+         0       0         0   0.00%   34.73684057     inf                  inf     2372    366    298    110941   152.8s
+
+        Nodes      |    B&B Tree     |            Objective Bounds              |  Dynamic Constraints |       Work      
+Src  Proc. InQueue |  Leaves   Expl. | BestBound       BestSol              Gap |   Cuts   InLp Confl. | LpIters     Time
+
+         0       0         0   0.00%   34.75156418     inf                  inf     1519    353    306    118197   159.0s
+         0       0         0   0.00%   34.75940909     inf                  inf     1832    349    326    121999   168.5s
+         0       0         0   0.00%   34.77036018     inf                  inf     2019    344    338    127585   173.9s
+         0       0         0   0.00%   34.7905903      inf                  inf     1821    340    350    133495   179.8s
+         0       0         0   0.00%   34.81448615     inf                  inf     1805    339    373    138988   185.1s
+         0       0         0   0.00%   34.84359298     inf                  inf     1896    355    386    143803   191.3s
+         0       0         0   0.00%   34.85881228     inf                  inf     1943    410    399    149912   197.4s
+         0       0         0   0.00%   34.87383134     inf                  inf     2084    355    416    155924   204.2s
+         0       0         0   0.00%   34.891622       inf                  inf     1538    346    439    160790   209.5s
+         0       0         0   0.00%   34.92823556     inf                  inf     1322    387    454    169166   216.5s
+         0       0         0   0.00%   34.94356027     inf                  inf     1327    394    482    173987   221.7s
+         0       0         0   0.00%   34.95223083     inf                  inf     1323    311    504    177444   227.4s
+         0       0         0   0.00%   34.9810176      inf                  inf     1217    308    513    182450   232.5s
+         0       0         0   0.00%   35.00509806     inf                  inf     1453    360    527    188069   238.4s
+         0       0         0   0.00%   35.0138411      inf                  inf     1497    372    548    191444   243.6s
+         0       0         0   0.00%   35.04234338     inf                  inf     1661    400    559    198148   250.1s
+         0       0         0   0.00%   35.06202893     inf                  inf     2016    406    584    204754   256.4s
+         0       0         0   0.00%   35.08286836     inf                  inf     2035    432    590    210182   261.4s
+         0       0         0   0.00%   35.09716036     inf                  inf     2053    418    596    216813   267.2s
+         0       0         0   0.00%   35.1094718      inf                  inf     2263    407    603    221867   272.7s
+
+        Nodes      |    B&B Tree     |            Objective Bounds              |  Dynamic Constraints |       Work      
+Src  Proc. InQueue |  Leaves   Expl. | BestBound       BestSol              Gap |   Cuts   InLp Confl. | LpIters     Time
+
+         0       0         0   0.00%   35.11677905     inf                  inf     2223    400    627    226262   278.3s
+ L       0       0         0   0.00%   35.11677905     37.2               5.60%     2223    400    627    226262   297.6s
+
+Symmetry detection completed in 0.0s
+Found 1 full orbitope(s) acting on 220 columns
+
+         2       2         1   0.00%   35.11677905     37.2               5.60%     1889    289    627    254842   300.0s
+
+Solving report
+  Status            Time limit reached
+  Primal bound      37.2
+  Dual bound        35.2
+  Gap               5.38% (tolerance: 0.01%)
+  P-D integral      297.74
+  Solution status   feasible
+                    37.2 (objective)
+  Timing            300.03
+                    11.16 (Presolve)
+                        MIP    time [calls] = 9.30 [1]
+                        subMIP time [calls] = 1.86 [2]
+                    288.86 (Solve)
+                        MIP    time [calls] = 271.40 [1]
+                        subMIP time [calls] = 17.46 [2]
+                    0.00 (Postsolve)
+                        MIP    time [calls] = 0.00 [1]
+                        subMIP time [calls] = 0.00 [2]
+  Max sub-MIP depth 4
+  Nodes             2
+  Repair LPs        0
+  LP iterations     254842
+                    2829 (strong br.)
+                    191271 (separation)
+                    25751 (heuristics)

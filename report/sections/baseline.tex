@@ -212,9 +212,12 @@ for Section~\ref{sec:improvements}.
     graph, so it removes this trade-off.
 \end{enumerate}
 
-Further, smaller improvements: all costs are multiples of $0.2$, so the
-objective scaled by $5$ is integer and any bound $z_{\mathrm{LB}}$ can be
-rounded up to $\lceil 5z_{\mathrm{LB}}\rceil/5$. This closes the final gaps
-of many time-limit runs at little cost. A second solver (Gurobi, with an
-academic licence) would show how much of the difference between the models
-is due to HiGHS.
+All costs are multiples of $0.2$, so any bound can be rounded up to the
+next multiple. HiGHS already detects this (its log reports ``objective
+function is integral with scale 5''), so the baseline benefits from it, and
+it is not an improvement over the baseline. We use it explicitly only where
+the solver cannot: for the bounds obtained by column generation, and for an
+``improving cut'' when a feasible solution is known
+(Section~\ref{sec:improvements}). A second solver (Gurobi, with an academic
+licence) would show how much of the difference between the models is due to
+HiGHS.

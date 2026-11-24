@@ -1,0 +1,87 @@
+MIP has 101113 rows; 7944 cols; 408491 nonzeros; 7944 integer variables (7944 binary)
+Coefficient ranges:
+  Matrix  [1e+00, 5e+02]
+  Cost    [6e-01, 1e+00]
+  Bound   [1e+00, 1e+00]
+  RHS     [1e+00, 1e+00]
+Presolving model
+101113 rows, 7944 cols, 408491 nonzeros 0s
+3830 rows, 7943 cols, 143313 nonzeros 4s
+3830 rows, 7943 cols, 143313 nonzeros 4s
+Presolve reductions: rows 3830(-97283); columns 7943(-1); nonzeros 143313(-265178) 
+Objective function is integral with scale 5
+
+Solving MIP model with:
+   3830 rows
+   7943 cols (7943 binary, 0 integer, 0 implied int., 0 continuous, 0 domain fixed)
+   143313 nonzeros
+   Thread count: 12 available cores, 16 logical processors, using up to 1 workers across 1 threads.
+
+Src: B => Branching; C => Central rounding; F => Feasibility pump; H => Heuristic;
+     I => Shifting; J => Feasibility jump; L => Sub-MIP; P => Empty MIP; R => Randomized rounding;
+     S => Solve LP; T => Evaluate node; U => Unbounded; X => User solution; Y => HiGHS solution;
+     Z => ZI Round; l => Trivial lower; p => Trivial point; u => Trivial upper; z => Trivial zero
+
+        Nodes      |    B&B Tree     |            Objective Bounds              |  Dynamic Constraints |       Work      
+Src  Proc. InQueue |  Leaves   Expl. | BestBound       BestSol              Gap |   Cuts   InLp Confl. | LpIters     Time
+
+ J       0       0         0   0.00%   -inf            44                 Large        0      0      0         0     8.6s
+         0       0         0   0.00%   36.3451425      44                17.40%        0      0      4     38495    27.7s
+         0       0         0   0.00%   36.79054566     44                16.39%      469     28     65     44522    34.1s
+         0       0         0   0.00%   36.99275761     44                15.93%      768     47     65     52651    40.1s
+         0       0         0   0.00%   37.08354438     44                15.72%      935     64     65     55486    47.2s
+         0       0         0   0.00%   37.22403301     44                15.40%     1507     99     65     64940    56.1s
+         0       0         0   0.00%   37.26113949     44                15.32%     1943    112     65     67353    62.9s
+         0       0         0   0.00%   37.35435936     44                15.10%     2816    155     65     72570    75.4s
+         0       0         0   0.00%   37.3582994      44                15.09%     3132    170     65     73339    82.0s
+         0       0         0   0.00%   37.37677724     44                15.05%     3417    169     65     75598    88.1s
+         0       0         0   0.00%   37.39615436     44                15.01%     3800    180     65     76590   101.6s
+         0       0         0   0.00%   37.47209789     44                14.84%     4119    211     65     85866   125.0s
+         0       0         0   0.00%   37.51785089     44                14.73%     4634    214     65     88763   134.3s
+         0       0         0   0.00%   37.54661651     44                14.67%     5049    220     65     91627   143.1s
+         0       0         0   0.00%   37.56130746     44                14.63%     5310    237     65     95807   150.9s
+         0       0         0   0.00%   37.56809798     44                14.62%     5611    224     65     97243   156.5s
+         0       0         0   0.00%   37.62413116     44                14.49%     5435    214     65    105168   164.4s
+         0       0         0   0.00%   37.62521872     44                14.49%     5605    236     65    105954   170.7s
+         0       0         0   0.00%   37.64176936     44                14.45%     5606    224     65    113736   179.6s
+ L       0       0         0   0.00%   37.64266568     39.4               4.46%     5353    240     65    114737   196.5s
+
+        Nodes      |    B&B Tree     |            Objective Bounds              |  Dynamic Constraints |       Work      
+Src  Proc. InQueue |  Leaves   Expl. | BestBound       BestSol              Gap |   Cuts   InLp Confl. | LpIters     Time
+
+         2       0         1  50.00%   37.64266568     39.4               4.46%     4727    141     67    152706   204.8s
+        43       0         2  50.00%   37.64266568     39.4               4.46%     4728    141     85    232366   244.5s
+ T      56       0         4  50.00%   37.64266568     38.8               2.98%     4729    141    120    233951   245.7s
+       104      46        16  50.00%   37.68333333     38.8               2.88%     4733    141    303    241961   268.8s
+       140      46        17  50.00%   37.68333333     38.8               2.88%     3781    167    394    294524   279.2s
+       237      91        42  73.44%   37.68333333     38.8               2.88%     3921    177    789    310112   288.2s
+       285      91        60  73.44%   37.68333333     38.8               2.88%     3924    177    987    323952   293.3s
+       319     132        71  73.44%   37.68333333     38.8               2.88%     3907    186   1046    338029   299.7s
+       322     148        72  73.44%   37.68333333     38.8               2.88%     3907    186   1046    338451   300.0s
+
+Solving report
+  Status            Time limit reached
+  Primal bound      38.8
+  Dual bound        37.8
+  Gap               2.58% (tolerance: 0.01%)
+  P-D integral      56.81
+  Solution status   feasible
+                    38.8 (objective)
+                    2.44249065418e-15 (integrality violation)
+  Timing            300.02
+                    7.17 (Presolve)
+                        MIP    time [calls] = 6.01 [1]
+                        subMIP time [calls] = 1.16 [1]
+                    292.85 (Solve)
+                        MIP    time [calls] = 279.20 [1]
+                        subMIP time [calls] = 13.65 [1]
+                    0.00 (Postsolve)
+                        MIP    time [calls] = 0.00 [1]
+                        subMIP time [calls] = 0.00 [1]
+  Max sub-MIP depth 2
+  Nodes             322
+  Repair LPs        0
+  LP iterations     338451
+                    57166 (strong br.)
+                    79406 (separation)
+                    20937 (heuristics)

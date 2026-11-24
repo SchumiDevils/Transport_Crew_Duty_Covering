@@ -1,0 +1,200 @@
+% ===========================================================================
+% Section 5 -- Proposed improvements
+% ===========================================================================
+
+We propose two improvements, each aimed at the bottlenecks B1--B5 of
+Section~\ref{sec:bottlenecks}:
+\begin{itemize}[nosep]
+  \item \textbf{(CF+)}, a strengthened compact model (Track A, with the warm
+    start of Track C): clique constraints (B3), symmetry breaking (B2), a
+    smaller model (B1) and the greedy solution as a starting point (B4);
+  \item \textbf{(SP-CG)}, column generation for the set partitioning model
+    (Track B), which removes the employee index altogether (B1, B2), has a
+    much stronger bound (B3) and is exact on any graph (B5). Optimality is
+    proved by \emph{reduced-cost enumeration} instead of a full
+    branch-and-price.
+\end{itemize}
+The code is in \texttt{src/models/improved.py} and
+\texttt{src/models/colgen.py}.
+
+\subsection{Strengthened conflict formulation (CF+)}
+\label{sec:cfp}
+
+(CF+) has the same variables $y_k$, $x_{ik}$ as (CF) and is exact under the
+same condition (transitive $G$). It differs in three ways.
+
+\paragraph{Clique constraints.} Let $\mathcal Q$ be a family of cliques of
+the time-conflict graph (duties $i,j$ with neither $(i,j)$ nor $(j,i)$ in
+$\A$) such that every conflicting pair lies in some $Q\in\mathcal Q$. The
+linking and time-conflict rows \eqref{cf:link}--\eqref{cf:conflict} are
+replaced by
+\begin{equation}\label{cfp:clique}
+  \sum_{i\in Q} x_{ik}\le y_k \qquad Q\in\mathcal Q,\; k\in\K .
+\end{equation}
+Each row of~\eqref{cfp:clique} implies the pairwise rows of all pairs in $Q$,
+and, since every duty lies in some clique, also $x_{ik}\le y_k$; the LP
+relaxation is therefore at least as strong as that of (CF), and strictly
+stronger as soon as a clique has three or more duties. This is exactly the
+weakness of Proposition~\ref{prop:lp-cf}: with $q$ pairwise overlapping
+duties, \eqref{cfp:clique} gives $\sum_i x_{ik}\le y_k$, so the fractional
+solution of the proof is cut off.
+
+When transfer times are zero, the conflict graph is the overlap graph of the
+duty intervals, an interval graph, whose maximal cliques are the sets of
+duties running at a common moment, at most $n$ of them. With transfer
+times, two duties that do not overlap can still conflict ($e_i<s_j<e_i+t_{ij}$),
+and the conflict graph is only a co-comparability graph, which can have
+exponentially many maximal cliques. We therefore build $\mathcal Q$ in two
+steps: first the interval cliques (the set of duties running at each start
+time, keeping only maximal ones), then a greedy cover of the remaining
+conflicting pairs, each grown into a clique by adding common neighbours.
+On our instances $|\mathcal Q|$ is between $0.6n$ and $1.4n$.
+
+\paragraph{Spread conflicts.} The pairwise spread rows of (CF) are kept.
+We also implemented an alternative with $O(n)$ rows per employee: with duties
+sorted by start time, a continuous ``started before'' variable
+$\sigma_{qk}\ge\sigma_{q-1,k}$, $\sigma_{qk}\ge x_{(q)k}$ and, for each duty
+$j$, $x_{jk}+\sigma_{p(j),k}\le y_k$, where $p(j)$ is the last position with
+$s<e_j-T_k$. Setting $\sigma_{qk}=\max_{l\le q}x_{(l)k}$ shows that its LP
+projection on $(x,y)$ is exactly the set of pairwise spread rows, so the LP
+bound is the same with far fewer rows. In practice it was worse: the
+pairwise rows are binary conflicts that HiGHS adds to its \emph{clique table},
+from which its root cuts combine time and spread conflicts. Hidden behind
+$\sigma$, they are lost and the root bound drops (Section~\ref{sec:ablation}).
+
+\paragraph{Symmetry breaking.} Within each type, number the employees
+$0,1,\dots$ and the duties by start time. Any solution can be relabelled so
+that the employees used come first, ordered by their first duty. Then
+employee $r$ has at least $r$ duties starting before its first one, so its
+first duty has position at least $r$. Hence the constraints
+\begin{equation}\label{cfp:sym}
+  x_{ik}=0 \;\;\text{if } \mathrm{pos}(i)<r(k),\qquad
+  y_{k}\le y_{k-1}\;\;(r(k)\ge 1)
+\end{equation}
+remove symmetric copies but keep at least one copy of every solution. The
+fixed variables are not even created. On our instances this removes about
+30\% of the variables, and the rows shrink by a factor of 2.6, since the
+conflict rows of an employee only involve the duties it can still take.
+
+\paragraph{Starting solution: an improving cut.} The greedy solution
+$\bar x$ (with cost $\bar z$) is known before the solve. The natural way to
+use it is a MIP start, but HiGHS~1.16 handles MIP starts incorrectly: when
+presolve fixes variables to $1$, it evaluates the start without the constant
+cost of those variables, and then prunes with a wrong incumbent value. On a
+set partitioning model it returned an ``optimal'' value of $8.8$ for an
+instance whose optimum is $9.6$. We use instead a solver-independent
+construction that is correct by design. Every cost is a multiple of $0.2$, so
+a solution better than $\bar x$ costs at most $\bar z-0.2$, and we add the
+\emph{improving cut}
+\begin{equation}\label{cfp:cut}
+  \textstyle\sum_k c_k y_k\le \bar z-0.2 .
+\end{equation}
+If the model with~\eqref{cfp:cut} is infeasible, $\bar x$ is optimal; if the
+time runs out without a solution, $\bar x$ is returned with the solver's
+bound. In both cases the run always ends with a solution at least as good as
+the greedy, and the cut also helps the solver prune.
+
+\paragraph{Size.} With pairwise spread conflicts the model is still
+$O(|\K|\,n^2)$ in the worst case, but symmetry breaking and the clique rows
+make it 2--7 times smaller than (CF) (median 3.4, in non-zeros). The same
+4-million non-zero limit applies.
+
+\subsection{Column generation with reduced-cost enumeration (SP-CG)}
+\label{sec:cg}
+
+\paragraph{Master problem.} The restricted master problem (RMP) is the LP
+relaxation of (SP) over a subset of columns, with equality rows
+$\sum_p a_{ip}\lambda_p=1$. Covering rows ($\ge1$) would allow removing a
+duty from a shift, which is only valid if $G$ is transitive, so we keep
+equalities and (SP-CG) is exact on every DAG. Each column is a path of $G$
+with cost $0.6$ if it is feasible for a half-time employee and $1$ otherwise.
+The RMP starts from the $n$ single-duty shifts, which guarantee feasibility,
+and the shifts of the greedy solution. It is solved by the simplex method of
+HiGHS, warm-started after each addition of columns.
+
+\paragraph{Pricing.} Given the duals $\pi$, for each type $\tau$ we look for
+paths $p$ of $G$ with negative reduced cost $c_\tau-\sum_{i\in p}\pi_i$ that
+satisfy (S2)--(S3) for $\tau$. Labels $(\text{cost}=-\sum\pi,\;\text{work},\;
+s_{\mathrm f},\;\text{path})$ are extended along the arcs of $G$ in order of
+start time (a topological order). Three devices make this fast enough:
+\begin{itemize}[nosep]
+  \item \emph{Grouping by first start.} The spread of every extension
+    depends only on $s_{\mathrm f}$ and the end node, so labels at a node are
+    grouped by $s_{\mathrm f}$. In each group we keep the Pareto front in
+    (work, cost), stored sorted by work, so a new label is inserted or
+    rejected by binary search. A label is discarded only if a label with the
+    same $s_{\mathrm f}$ has no larger work and cost, so the pricing is exact.
+  \item \emph{Completion bound.} Let
+    $g(j)=\min\{0,\min_{(j,k)\in\A}(g(k)-\pi_k)\}$, computed backwards in
+    $O(|\A|)$. It is the cheapest cost of any extension of a label at $j$,
+    resources ignored. A label with $c_\tau+\text{cost}+g(j)\ge0$ cannot lead
+    to a negative column and is dropped.
+  \item \emph{Heuristic pass.} First only the cheapest label per group, and
+    the 30 cheapest groups per node, are extended. The exact pass runs only
+    when this finds no negative column, so the last iteration is exact.
+\end{itemize}
+Up to 300 columns per type are added in each iteration. When the exact
+pricing finds no negative column, the RMP value is $z_{\mathrm{LP}}$, the LP
+bound of (SP). Before that, the exact minimum reduced costs
+$\bar c_\tau$ give the Lagrangian bound
+$z_{\mathrm{RMP}}+\sum_\tau(\bar z/c_\tau)\min(0,\bar c_\tau)$, since a
+solution of cost at most $\bar z$ uses at most $\bar z/c_\tau$ shifts of
+type $\tau$. Since all costs are multiples of $0.2$, the bound used is
+$\lceil 5z_{\mathrm{LP}}\rceil/5$.
+
+\paragraph{Integer solutions: price-and-branch.} The RMP with all the
+generated columns is solved as a MILP (with the improving
+cut~\eqref{cfp:cut} for the greedy solution), using at most 40\% of the
+remaining time. This gives a good upper bound $\bar z$ but, in general, no
+proof of optimality: an optimal solution may need columns that were never
+generated.
+
+\paragraph{Optimality proof: reduced-cost enumeration.} Instead of
+branch-and-price, we use the following classical argument.
+
+\begin{proposition}\label{prop:enum}
+Let $\pi$ be optimal duals of the LP relaxation of (SP), with value
+$z_{\mathrm{LP}}=\sum_i\pi_i$, and let $\bar c_p=c_p-\sum_{i\in p}\pi_i\ge0$
+be the reduced costs. Every solution of (SP) with cost at most $\bar z-0.2$
+uses only columns with $\bar c_p\le\Delta:=\bar z-0.2-z_{\mathrm{LP}}$.
+\end{proposition}
+\begin{proof}
+Let $P$ be the set of columns of a solution. Since $P$ partitions $\D$,
+$\sum_{p\in P}c_p=\sum_{p\in P}\bar c_p+\sum_{p\in P}\sum_{i\in p}\pi_i
+=\sum_{p\in P}\bar c_p+z_{\mathrm{LP}}$. If the cost is at most $\bar z-0.2$,
+then $\sum_{p\in P}\bar c_p\le\Delta$, and each term is non-negative, so each
+is at most $\Delta$.
+\end{proof}
+
+So, after column generation, we enumerate \emph{all} feasible paths with
+$\bar c_p\le\Delta$ by depth-first search from every duty, pruned with the
+completion bound $g$ (a partial path is abandoned when
+$c_{\min}+\text{cost}+g(j)>\Delta$, where $c_{\min}=0.6$ while the path is
+still feasible for a half-time employee and $1$ afterwards). The MILP over
+these columns is then solved. If it finds a solution better than $\bar z$,
+that solution is optimal; if it has none, $\bar z$ is optimal. The
+enumeration is small when the gap $\bar z-z_{\mathrm{LP}}$ is small, which is
+the case here because the LP bound of (SP) is very tight
+(Section~\ref{sec:comparison}). If more than $10^6$ columns qualify, or the
+time limit is reached, we stop and report the gap between $\bar z$ and
+$\lceil 5z_{\mathrm{LP}}\rceil/5$.
+
+\paragraph{Exactness.} The procedure is exact on every DAG: the RMP has the
+partitioning rows, the pricing and the enumeration only discard labels that
+are dominated or cannot meet the threshold, and the final claim of
+optimality rests on Proposition~\ref{prop:enum}. Unlike the compact models it
+needs no employee pool, so it has no symmetry and its size does not depend on
+$|\K|$.
+
+\subsection{Verification of the improvements}
+\label{sec:verif-improved}
+
+The test script of Section~\ref{sec:verification} was extended to the new
+models. On the nine hand-made instances, (SP-CG) returns the exact optimum,
+including $0.6$ on the non-transitive one, and every variant of (CF+) returns
+the value of (CF). In addition, eight generated instances ($n=12$--$26$,
+three of them non-transitive with arc\_drop $=0.3$) are solved by all
+methods: (SP-CG) always matches (AF), and all (CF+) variants match (CF). In
+the full experiment, every solution is checked by the validator, and the
+analysis checks that all proven optima of an instance agree
+(Section~\ref{sec:comparison}).

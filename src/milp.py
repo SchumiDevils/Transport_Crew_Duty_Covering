@@ -119,6 +119,10 @@ def solve_highs(m: MILP, time_limit: float, threads: int = 1, relax: bool = Fals
     h.setOptionValue("threads", int(threads))
     h.setOptionValue("random_seed", int(seed))
     h.passModel(_highs_model(m, relax))
+    # NOTE: HiGHS 1.16 MIP starts (setSolution) are unreliable: presolve drops
+    # the objective offset of the fixed columns when evaluating the start, and
+    # the solver can return a wrong "optimal" value (found on our set
+    # partitioning models). Use solve_from() below instead.
 
     root = {"bound": -INF}
 
@@ -211,3 +215,29 @@ def solve_gurobi(m: MILP, time_limit: float, threads: int = 1, relax: bool = Fal
 
 def solve(m: MILP, solver: str = "highs", **kw) -> SolveResult:
     return {"highs": solve_highs, "gurobi": solve_gurobi}[solver](m, **kw)
+
+
+def solve_from(m: MILP, x0, step: float, solver: str = "highs", **kw) -> SolveResult:
+    """Solve m knowing a feasible solution x0 (solver-independent MIP start).
+
+    All objective values are multiples of `step`, so a better solution costs
+    at most z0 - step: the "improving cut" c.x <= z0 - step is added. If the
+    cut makes the model infeasible, x0 is optimal; if no better solution is
+    found in time, x0 is returned with the solver's bound (capped at z0).
+    """
+    z0 = float(np.dot(m.cost, x0))
+    nz = [j for j, c in enumerate(m.cost) if c != 0.0]
+    m.add_row(nz, [m.cost[j] for j in nz], -INF, z0 - step + 1e-6)
+    try:
+        r = solve(m, solver, **kw)
+    finally:  # remove the cut again (the model may be reused)
+        del m.row_index[m.row_start[-2]:], m.row_value[m.row_start[-2]:]
+        m.row_start.pop(), m.row_lo.pop(), m.row_hi.pop()
+    if r.status == "infeasible":
+        return SolveResult("optimal", z0, z0, 0.0, min(r.root_bound, z0) if math.isfinite(r.root_bound)
+                           else z0, r.nodes, r.runtime, np.asarray(x0, dtype=float))
+    if r.x is None or not r.obj < z0:
+        bound = min(r.bound, z0) if math.isfinite(r.bound) else -INF
+        return SolveResult(r.status, z0, bound, _gap(z0, bound), r.root_bound, r.nodes, r.runtime,
+                           np.asarray(x0, dtype=float))
+    return r
