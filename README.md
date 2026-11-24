@@ -2,7 +2,7 @@
 
 **Course:** Model-driven Decision Methods (Università di Pisa)  
 **Track:** Normal Project  
-**Status:** Phase 1 written (Sections 1–2) → next: send Milestone 1 e-mail, then Phase 2
+**Status:** Phase 2 written (Sections 1–4) → next: send Milestone 2 e-mail, then Phase 3
 
 > **Source documents.** The binding document for this project is *“Model-driven Decision Methods: Project”* (`projects-proposals.pdf`, steps 1–6 + report contents). The other file, `projects-instructions.pdf`, is the guide of a **different course** (*Optimization for Data Science, 784AA*). Its general workflow advice (partial reports, plagiarism, email-only communication) is a good fit, but its convergence-theory requirements (§3.3) do **not** apply here. Where the two disagree, follow the MDDM document and ask the lecturer.
 
@@ -165,15 +165,21 @@ The course recommends delivering the report in **three incremental phases** via 
 
 #### Step 4 — Initial Performance Analysis & Bottleneck Diagnosis
 
-- [ ] **Summarize baseline performance** with clean tables and readable plots (use log scales for runtimes/gaps):
+- [x] **Summarize baseline performance** with clean tables and readable plots (use log scales for runtimes/gaps):
   - Runtime and MIP gap vs. instance size $n$.
   - Effect of compatibility density, peakiness, and $W/T$ tightness on hardness.
   - Maximum instance size reliably solved to optimality on your machine.
-- [ ] **Identify the primary bottlenecks** (form concrete hypotheses for Step 5):
+- [x] **Identify the primary bottlenecks** (form concrete hypotheses for Step 5):
   - **Symmetry:** Are many Branch-and-Bound nodes wasted exploring permutations of identical FT/HT employees?
   - **Weak LP relaxation:** Is there a large integrality gap at the root node (e.g., fractional $y_k$ or loose Big-$M$ spread constraints)?
   - **Model blow-up:** Does the number of variables/constraints scale too fast with $n$ and $|A|$?
   - **Poor primal bounds:** Does the solver struggle to find good feasible integer solutions early?
+
+> **Step 4 status (done):** 228 runs (3 models × 76 instances), report Section 4 ([report/sections/baseline.tex](report/sections/baseline.tex)). Reproduce: `python src/run_experiments.py --models AF CF CFM --groups scale factor orlib --time-limit 300 --threads 1 --workers 5 --out results/raw/baseline.csv` (~1.7 h), then `python src/analyze_baseline.py`.
+> - Largest $n$ solved for all 3 seeds: (AF) 25, (CF) 50, (CF-M) 50; too large from $n=150$. No OR-Lib instance solved; (AF) too large from csp250.
+> - LP gap: (AF) 19.6%, (CF)/(CF-M) 30.5%; root gap after HiGHS cuts: (CF) 0.8%, (CF-M) 5.5%, (AF) 12.2%.
+> - Bottlenecks B1–B5: model size (employee index), symmetry, weak CF LP, poor incumbents (AF worse than greedy in 14/49 time-limit runs), non-transitive graphs. Each maps to a Phase 3 track: B1/B5 → Track B (column generation), B2/B3 → Track A (symmetry breaking, clique constraints), B4 → Track C (greedy MIP start), plus objective rounding to multiples of 0.2.
+> - **Correction found:** 3 (CF-M) time-limit incumbents paid for idle employees ($y_k=1$, no duty), so the validator flagged a cost mismatch. The shifts are feasible. `src/solve.py` now validates decoded shifts at their own cost and logs the idle cost; the 3 CSV rows were re-recorded with the same rule.
 
 > **Milestone 2 (Email Lecturer):** Add Sections 3–4 to the PDF report (implementation choices, baseline experimental setup, tables/plots, bottleneck analysis) and email the updated report for feedback.
 
@@ -217,10 +223,10 @@ Select **at least one** (ideally 2–3 complementary or progressively stronger) 
 
 Verify that the PDF report includes all mandatory items:
 - [ ] **Title page:** Group number, member names/matricola/emails, project number, and verbatim problem statement.
-- [ ] **Section 1:** Description of the optimization problem and mathematical model(s) + notation & theoretical discussion.
-- [ ] **Section 2:** Description of the instances and scalable generator design.
-- [ ] **Section 3:** Description of the initial implementation (tools, language, solver) with justification of choices.
-- [ ] **Section 4:** First computational experiments with clean tables/graphs and bottleneck analysis.
+- [x] **Section 1:** Description of the optimization problem and mathematical model(s) + notation & theoretical discussion.
+- [x] **Section 2:** Description of the instances and scalable generator design.
+- [x] **Section 3:** Description of the initial implementation (tools, language, solver) with justification of choices.
+- [x] **Section 4:** First computational experiments with clean tables/graphs and bottleneck analysis.
 - [ ] **Section 5:** Description of the proposed improvements (mathematical & algorithmic details).
 - [ ] **Section 6:** Comparative computational evaluation proving the effectiveness of the improvements.
 - [ ] Originality check: all text and code are your own work, with any external references properly cited.

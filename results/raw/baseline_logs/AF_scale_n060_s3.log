@@ -1,0 +1,68 @@
+MIP has 4407 rows; 84318 cols; 333132 nonzeros; 84318 integer variables (84318 binary)
+Coefficient ranges:
+  Matrix  [1e+00, 2e+03]
+  Cost    [6e-01, 1e+00]
+  Bound   [1e+00, 1e+00]
+  RHS     [1e+00, 1e+00]
+Presolving model
+4407 rows, 84318 cols, 333132 nonzeros 0s
+4121 rows, 67729 cols, 267844 nonzeros 8s
+3816 rows, 54259 cols, 215060 nonzeros 14s
+3676 rows, 50672 cols, 201171 nonzeros 17s
+Presolve reductions: rows 3676(-731); columns 50672(-33646); nonzeros 201171(-131961) 
+Objective function is integral with scale 5
+
+Solving MIP model with:
+   3676 rows
+   50672 cols (50672 binary, 0 integer, 0 implied int., 0 continuous, 0 domain fixed)
+   201171 nonzeros
+   Thread count: 12 available cores, 16 logical processors, using up to 1 workers across 1 threads.
+
+Src: B => Branching; C => Central rounding; F => Feasibility pump; H => Heuristic;
+     I => Shifting; J => Feasibility jump; L => Sub-MIP; P => Empty MIP; R => Randomized rounding;
+     S => Solve LP; T => Evaluate node; U => Unbounded; X => User solution; Y => HiGHS solution;
+     Z => ZI Round; l => Trivial lower; p => Trivial point; u => Trivial upper; z => Trivial zero
+
+        Nodes      |    B&B Tree     |            Objective Bounds              |  Dynamic Constraints |       Work      
+Src  Proc. InQueue |  Leaves   Expl. | BestBound       BestSol              Gap |   Cuts   InLp Confl. | LpIters     Time
+
+ J       0       0         0   0.00%   -inf            35                 Large        0      0      0         0    21.2s
+         0       0         0   0.00%   18.98760439     35                45.75%        0      0      4     68163    86.5s
+         0       0         0   0.00%   18.98760439     35                45.75%      158     25      4     71946    92.1s
+         0       0         0   0.00%   18.98760439     35                45.75%      270     44      4     76572    98.5s
+         0       0         0   0.00%   18.98760439     35                45.75%      416     64      4     80619   105.0s
+         0       0         0   0.00%   18.98760439     35                45.75%      516     80      4     84552   111.0s
+         0       0         0   0.00%   18.98760439     35                45.75%      706     99     28     88443   119.1s
+         0       0         0   0.00%   18.98760439     35                45.75%      886    119     28     93974   127.6s
+         0       0         0   0.00%   18.98833152     35                45.75%     1123    145     28    103923   142.0s
+         0       0         0   0.00%   19.03021026     35                45.63%     1307    165     28    123083   168.2s
+         0       0         0   0.00%   19.05920818     35                45.55%     1472    183     28    129167   178.1s
+         0       0         0   0.00%   19.06168246     35                45.54%     1651    201     28    132482   184.2s
+         0       0         0   0.00%   19.06168246     35                45.54%     1954    236     28    136546   191.3s
+         0       0         0   0.00%   19.06168246     35                45.54%     2097    249     28    228655   300.1s
+
+Solving report
+  Status            Time limit reached
+  Primal bound      35
+  Dual bound        19.2
+  Gap               45.14% (tolerance: 0.01%)
+  P-D integral      183.95
+  Solution status   feasible
+                    35 (objective)
+  Timing            300.13
+                    44.10 (Presolve)
+                        MIP    time [calls] = 19.30 [1]
+                        subMIP time [calls] = 24.80 [7]
+                    256.01 (Solve)
+                        MIP    time [calls] = 175.54 [1]
+                        subMIP time [calls] = 80.48 [3]
+                    0.00 (Postsolve)
+                        MIP    time [calls] = 0.00 [1]
+                        subMIP time [calls] = 0.00 [7]
+  Max sub-MIP depth 4
+  Nodes             0
+  Repair LPs        0
+  LP iterations     228655
+                    0 (strong br.)
+                    70261 (separation)
+                    90231 (heuristics)

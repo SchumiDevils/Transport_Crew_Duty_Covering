@@ -74,11 +74,18 @@ def run(inst_path: str | Path, model: str, time_limit: float = 300, threads: int
                nodes=r.nodes, runtime_sec=r.runtime)
     if r.x is not None:
         shifts = decode(r.x)
-        sol = {"instance": row["instance"], "model": model, "objective": round(r.obj, 6), "shifts": shifts}
+        # An incumbent may pay for employees with y_k = 1 but no duty (the
+        # compact models allow it; never optimal). Validate the decoded
+        # shifts at their own cost and record the idle cost separately.
+        cost = sum(1.0 if s["type"] == "FT" else COST_HT for s in shifts)
+        idle = r.obj - cost
+        sol = {"instance": row["instance"], "model": model, "objective": round(cost, 6), "shifts": shifts}
         errs = validate(inst, sol)
+        if idle < -1e-6:
+            errs.append(f"decoded cost {cost:.4f} above reported {r.obj:.4f}")
         row.update(valid=not errs, num_ft=sum(s["type"] == "FT" for s in shifts),
                    num_ht=sum(s["type"] == "HT" for s in shifts),
-                   errors="; ".join(errs[:3]))
+                   errors="; ".join(errs[:3]) or (f"idle employees cost {idle:.1f}" if idle > 1e-6 else ""))
         if sol_dir:
             sol_dir.mkdir(parents=True, exist_ok=True)
             (sol_dir / f"{model}_{row['instance']}.json").write_text(json.dumps(sol))

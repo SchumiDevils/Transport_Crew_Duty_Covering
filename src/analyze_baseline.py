@@ -45,7 +45,8 @@ def load(path: Path) -> pd.DataFrame:
     df["zbest"] = np.fmin(df.zbest, df.greedy_ub)
     for c in ("lp", "root"):
         col = "lp_bound" if c == "lp" else "root_bound"
-        df[f"{c}_gap"] = (df.zopt - df[col]) / df.zopt
+        # bound 0 = node/LP not finished: no bound, excluded from the means
+        df[f"{c}_gap"] = (df.zopt - df[col].where(df[col] > 0)) / df.zopt
     df["final_gap"] = np.where(df.solved, 0.0, (df.obj - df.bound) / df.obj)
     df["vs_greedy"] = (df.obj - df.greedy_ub) / df.greedy_ub
     return df
@@ -115,24 +116,23 @@ def table_bounds(df: pd.DataFrame) -> str:
 
 def table_orlib(df: pd.DataFrame) -> str:
     o = df[df.group == "orlib"]
-    lines = [r"\begin{tabular}{rrrrrrrr}", r"\toprule",
-             r" & & & \multicolumn{3}{c}{(AF)} & \multicolumn{2}{c}{(CF) restriction} \\",
-             r"\cmidrule(lr){4-6}\cmidrule(lr){7-8}",
-             r"$n$ & LB & greedy & obj & bound & status & obj & bound \\", r"\midrule"]
-    for n in sorted(o.n.dropna().unique()):
-        a = o[(o.n == n) & (o.model == "AF")]
-        c = o[(o.n == n) & (o.model == "CF")]
-        a = a.iloc[0] if len(a) else None
-        c = c.iloc[0] if len(c) else None
-        base = o[o.n == n].iloc[0]
+    lines = [r"\begin{tabular}{rrrrrrrrrr}", r"\toprule",
+             r" & & \multicolumn{4}{c}{(AF), exact} & \multicolumn{4}{c}{(CF), restriction} \\",
+             r"\cmidrule(lr){3-6}\cmidrule(lr){7-10}",
+             r"$n$ & LB & greedy & obj & bound & status & greedy$^{\mathrm{pw}}$ & obj & bound & status \\",
+             r"\midrule"]
 
-        def st(r):
-            return "--" if r is None else {"optimal": "opt", "time_limit": "TL",
-                                           "too_large": "too large"}.get(r.status, r.status)
-        lines.append(" & ".join([f"{int(n)}", fmt(base.lb), fmt(base.greedy_ub),
-                                 fmt(None if a is None else a["obj"]), fmt(None if a is None else a["bound"]),
-                                 st(a), fmt(None if c is None else c["obj"]),
-                                 fmt(None if c is None else c["bound"])]) + r" \\")
+    def st(r):
+        return {"optimal": "opt", "time_limit": "TL", "too_large": "large"}.get(r.status, r.status)
+
+    def bd(r):  # bound 0 = root LP not finished: no dual bound
+        return "none" if r["bound"] == 0 else fmt(r["bound"])
+
+    for n in sorted(o.n.dropna().unique()):
+        a = o[(o.n == n) & (o.model == "AF")].iloc[0]
+        c = o[(o.n == n) & (o.model == "CF")].iloc[0]
+        lines.append(" & ".join([f"{int(n)}", fmt(a.lb), fmt(a.greedy_ub), fmt(a["obj"]), bd(a), st(a),
+                                 fmt(c.greedy_ub), fmt(c["obj"]), bd(c), st(c)]) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     return "\n".join(lines) + "\n"
 

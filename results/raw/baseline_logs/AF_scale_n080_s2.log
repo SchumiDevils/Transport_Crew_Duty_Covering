@@ -1,0 +1,52 @@
+MIP has 7633 rows; 193921 cols; 768404 nonzeros; 193921 integer variables (193921 binary)
+Coefficient ranges:
+  Matrix  [1e+00, 2e+03]
+  Cost    [6e-01, 1e+00]
+  Bound   [1e+00, 1e+00]
+  RHS     [1e+00, 1e+00]
+Presolving model
+7633 rows, 193921 cols, 768404 nonzeros 0s
+   Considered 2054 / 183820 binaries; 2037 probed  (rate 2/ms => expected probing finish time 466s) 19s
+7633 rows, 181548 cols, 718915 nonzeros 22s
+   Considered 2023 / 181548 binaries; 2023 probed  (rate 2/ms => expected probing finish time 478s) 35s
+7630 rows, 180954 cols, 716540 nonzeros 36s
+7629 rows, 180954 cols, 716540 nonzeros 36s
+Presolve reductions: rows 7629(-4); columns 180954(-12967); nonzeros 716540(-51864) 
+Objective function is integral with scale 5
+
+Solving MIP model with:
+   7629 rows
+   180954 cols (180954 binary, 0 integer, 0 implied int., 0 continuous, 0 domain fixed)
+   716540 nonzeros
+   Thread count: 12 available cores, 16 logical processors, using up to 1 workers across 1 threads.
+
+Src: B => Branching; C => Central rounding; F => Feasibility pump; H => Heuristic;
+     I => Shifting; J => Feasibility jump; L => Sub-MIP; P => Empty MIP; R => Randomized rounding;
+     S => Solve LP; T => Evaluate node; U => Unbounded; X => User solution; Y => HiGHS solution;
+     Z => ZI Round; l => Trivial lower; p => Trivial point; u => Trivial upper; z => Trivial zero
+
+        Nodes      |    B&B Tree     |            Objective Bounds              |  Dynamic Constraints |       Work      
+Src  Proc. InQueue |  Leaves   Expl. | BestBound       BestSol              Gap |   Cuts   InLp Confl. | LpIters     Time
+
+ J       0       0         0   0.00%   -inf            45                 Large        0      0      0         0    58.3s
+         0       0         0   0.00%   0               45               100.00%        0      0      2     71874   300.1s
+
+Solving report
+  Status            Time limit reached
+  Primal bound      45
+  Dual bound        0
+  Gap               100% (tolerance: 0.01%)
+  P-D integral      300.05
+  Solution status   feasible
+                    45 (objective)
+  Timing            300.05
+                    47.29 (Presolve)
+                    252.76 (Solve)
+                    0.00 (Postsolve)
+  Max sub-MIP depth 0
+  Nodes             0
+  Repair LPs        0
+  LP iterations     71874
+                    0 (strong br.)
+                    0 (separation)
+                    0 (heuristics)
