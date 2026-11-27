@@ -12,14 +12,11 @@
 \usepackage[hidelinks]{hyperref}
 
 % ---------------------------------------------------------------------------
-% Notation macros (keep in sync with Section 1)
+% Notation (Section 1)
 % ---------------------------------------------------------------------------
 \newcommand{\D}{\mathcal{D}}          % set of duties
 \newcommand{\A}{\mathcal{A}}          % arcs of the compatibility graph
 \newcommand{\K}{\mathcal{K}}          % employee pool
-\newcommand{\Wft}{W}                  % FT max working time
-\newcommand{\Tft}{T}                  % FT max total time (spread)
-\newcommand{\TODO}[1]{\textcolor{red}{\textbf{TODO:} #1}}
 
 \newtheorem{proposition}{Proposition}
 \theoremstyle{remark}
@@ -33,8 +30,7 @@
 \begin{document}
 
 % ===========================================================================
-% Title page (mandatory content: group number, members, project number,
-% verbatim assignment)
+% Title page
 % ===========================================================================
 \begin{titlepage}
   \centering
@@ -81,7 +77,7 @@
   \end{quote}
 
   \vfill
-  {\small Report version: Phase 3 draft (Sections 1--6) --- \today\par}
+  {\small \today\par}
 \end{titlepage}
 
 \tableofcontents
@@ -90,7 +86,6 @@
 % ===========================================================================
 \section{Problem description and mathematical models}
 \label{sec:model}
-% Milestone 1
 % ===========================================================================
 
 \input{sections/model}
@@ -98,35 +93,30 @@
 % ===========================================================================
 \section{Instances and generator}
 \label{sec:instances}
-% Milestone 1
 % ===========================================================================
 \input{sections/instances}
 
 % ===========================================================================
 \section{Initial implementation}
 \label{sec:implementation}
-% Milestone 2
 % ===========================================================================
 \input{sections/implementation}
 
 % ===========================================================================
 \section{Initial computational experiments}
 \label{sec:baseline-exp}
-% Milestone 2
 % ===========================================================================
 \input{sections/baseline}
 
 % ===========================================================================
 \section{Proposed improvements}
 \label{sec:improvements}
-% Milestone 3
 % ===========================================================================
 \input{sections/improvements}
 
 % ===========================================================================
 \section{Comparative computational evaluation}
 \label{sec:comparison}
-% Milestone 3
 % ===========================================================================
 \input{sections/comparison}
 

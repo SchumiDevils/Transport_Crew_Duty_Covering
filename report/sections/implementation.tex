@@ -12,15 +12,16 @@
   \item \textbf{Solver: HiGHS 1.16}~\cite{huangfu2018} through its Python
     interface \texttt{highspy}. HiGHS is a state-of-the-art open-source
     MILP solver (branch-and-cut with presolve, cutting planes and primal
-    heuristics). It needs no licence, so all results can be reproduced
-    exactly by anyone, including the lecturer.
+    heuristics). It needs no licence, so anyone can rerun every experiment with the same solver version (running
+    times, and the results of runs that hit the time limit, depend on the
+    machine).
   \item \textbf{Second solver: Gurobi 14} through \texttt{gurobipy}. The same
     code can pass the models to Gurobi, which we use to cross-check the
     results on small instances. A full academic licence was not available
     when the baseline was run: the free licence is limited to 2000 variables
     and constraints, which covers only the verification instances of
     Section~\ref{sec:verification}. A comparison of solvers on the full
-    suite is a possible improvement for Section~\ref{sec:improvements}.
+    suite is left for future work (Section~\ref{sec:conclusions}).
 \end{itemize}
 
 To guarantee that both solvers receive \emph{exactly} the same model, the

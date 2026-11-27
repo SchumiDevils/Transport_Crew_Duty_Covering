@@ -184,8 +184,10 @@ for Section~\ref{sec:improvements}.
     dependence. Smaller pools, from a better heuristic $\bar z$, would help
     the compact models.
   \item \textbf{Symmetry.} Employees of the same type are interchangeable.
-    Any solution has $U_{\mathrm F}!\,U_{\mathrm H}!$ copies, and branching on
-    one employee's variable does not move the bound. This explains the many
+    A solution with $f$ full-time and $h$ half-time employees has
+    $\binom{U_{\mathrm F}}{f}f!\,\binom{U_{\mathrm H}}{h}h!$ copies
+    (Section~\ref{sec:properties}), and branching on one employee's
+    variable does not move the bound. This explains the many
     nodes of (CF-M) and the degenerate LP of (AF). \emph{Hypothesis:}
     symmetry-breaking constraints ($y_k\ge y_{k+1}$, and assigning
     duty~$i$ only to the first $i$ employees) reduce the nodes and the LP
@@ -196,9 +198,10 @@ for Section~\ref{sec:improvements}.
     grows; at $n=100$ (CF) does not finish the root node. \emph{Hypothesis:}
     replacing the pairwise time conflicts by \emph{maximal clique}
     constraints $\sum_{i\in Q}x_{ik}\le y_k$, one per maximal set $Q$ of
-    pairwise overlapping duties, gives a stronger and much smaller model.
-    The time-conflict graph is an interval graph, so it has at most $n$
-    maximal cliques and they are found by one sweep over the start times.
+    pairwise conflicting duties, gives a stronger and much smaller model.
+    Duties running at the same moment form such cliques, at most $n$ of
+    them; with non-zero transfer times further conflicts exist, which are
+    handled in Section~\ref{sec:cfp}.
   \item \textbf{Poor primal solutions.} The solver often ends with an
     incumbent worse than a simple greedy, or with none. \emph{Hypothesis:}
     passing the greedy as a starting solution (MIP start), and improving it

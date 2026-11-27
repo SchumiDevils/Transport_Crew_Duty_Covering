@@ -18,7 +18,9 @@ conflict rows are replaced by O(|K| n) rows that are at least as strong:
   * symmetry breaking: within each type, employees are ordered by their first
     duty, so duty at position q can only go to employees k <= q, and
     y_k >= y_{k+1};
-  * MIP start from the (pairwise) greedy solution.
+  * the (pairwise) greedy solution as starting point, passed through the
+    improving cut of src/milp.py:solve_from (HiGHS 1.16 MIP starts are
+    unreliable, see the note there).
 
 Each component can be switched off for the ablation study.
 Like (CF), the model is exact on transitive graphs and a restriction otherwise.
@@ -184,5 +186,5 @@ VARIANTS = {
     "CF+noclq": {"cliques": False},
     "CF+chain": {"chain": True},
     "CF+nosym": {"sym": False},
-    "CF+nostart": {},          # same model, no MIP start (handled in solve.py)
+    "CF+nostart": {},          # same model, without the improving cut (see solve.py)
 }

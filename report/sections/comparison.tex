@@ -61,7 +61,7 @@ solution, a primal gap of 10\% instead of 20\%.
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.62\textwidth]{figures/cmp_profile}
-\caption{Performance profile (Dolan--Mor\'e) of the running time on the 70
+\caption{Performance profile~\cite{dolan2002} of the running time on the 70
 instances solved by at least one method: share of instances that a method
 solves within $\tau$ times the time of the fastest method.}
 \label{fig:cmp-profile}
@@ -109,6 +109,9 @@ runs.}
 \end{table}
 
 Table~\ref{tab:cmp-bounds} explains the gap between the two improvements.
+(The baseline values differ slightly from Table~\ref{tab:base-bounds}
+because (SP-CG) proved the optimum of more instances, so the averages are
+taken over 60 instances instead of 47.)
 The LP bound of (SP) is 0.1\% from the optimum on average, and it is equal
 to the optimum on 64 of the 70 instances with a known optimum. This is far stronger than any
 compact model, including (AF) (19.6\%), as predicted in Section~\ref{sec:sp}:
@@ -179,6 +182,7 @@ Table~\ref{tab:cmp-ablation} shows which components of (CF+) matter.
 \end{itemize}
 
 \subsection{Discussion and conclusions}
+\label{sec:conclusions}
 
 The bottleneck analysis of Section~\ref{sec:bottlenecks} is confirmed. The
 compact models fail mainly because of the employee index, which makes them
@@ -198,7 +202,7 @@ LP itself is never the problem: even at $n=500$ column generation takes a
 quarter of the time limit. The next steps would therefore target the
 integer phase: a primal heuristic inside column generation (e.g.\ diving on
 the fractional columns) to reduce $\bar z$, which shrinks the enumeration
-threshold $\Delta$ directly, and full branch-and-price with Ryan--Foster
+threshold $\Delta$ directly, and full branch-and-price with Ryan--Foster~\cite{ryan1981}
 branching for the remaining instances. A compiled implementation of the
 pricing would also help at $n=500$, but is not needed for the sizes of the
 generated suite.

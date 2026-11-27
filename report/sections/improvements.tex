@@ -116,7 +116,8 @@ HiGHS, warm-started after each addition of columns.
 paths $p$ of $G$ with negative reduced cost $c_\tau-\sum_{i\in p}\pi_i$ that
 satisfy (S2)--(S3) for $\tau$. Labels $(\text{cost}=-\sum\pi,\;\text{work},\;
 s_{\mathrm f},\;\text{path})$ are extended along the arcs of $G$ in order of
-start time (a topological order). Three devices make this fast enough:
+start time (a topological order), the standard labelling scheme for this
+problem~\cite{irnich2005}. Three devices make this fast enough:
 \begin{itemize}[nosep]
   \item \emph{Grouping by first start.} The spread of every extension
     depends only on $s_{\mathrm f}$ and the end node, so labels at a node are
@@ -136,7 +137,7 @@ start time (a topological order). Three devices make this fast enough:
 Up to 300 columns per type are added in each iteration. When the exact
 pricing finds no negative column, the RMP value is $z_{\mathrm{LP}}$, the LP
 bound of (SP). Before that, the exact minimum reduced costs
-$\bar c_\tau$ give the Lagrangian bound
+$\bar c_\tau$ give the Lagrangian bound~\cite{lubbecke2005}
 $z_{\mathrm{RMP}}+\sum_\tau(\bar z/c_\tau)\min(0,\bar c_\tau)$, since a
 solution of cost at most $\bar z$ uses at most $\bar z/c_\tau$ shifts of
 type $\tau$. Since all costs are multiples of $0.2$, the bound used is
@@ -150,7 +151,9 @@ proof of optimality: an optimal solution may need columns that were never
 generated.
 
 \paragraph{Optimality proof: reduced-cost enumeration.} Instead of
-branch-and-price, we use the following classical argument.
+branch-and-price, we use the following argument, which underlies the
+column-enumeration methods of exact set partitioning
+algorithms~\cite{baldacci2008}.
 
 \begin{proposition}\label{prop:enum}
 Let $\pi$ be optimal duals of the LP relaxation of (SP), with value

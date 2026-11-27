@@ -123,8 +123,9 @@ instances in total:
     time away from the default (the 9 variants of Table~\ref{tab:factor} plus
     the default), seeds $1,2,3$. Used to isolate the effect of each
     parameter. The size $n=40$ is chosen to be within reach of the compact
-    models; we will adjust it if the baseline experiments show it is too easy
-    or too hard.
+    models. The baseline confirmed the choice: at $n=40$ the compact models
+    range from solved in seconds to unsolved within the time limit
+    (Section~\ref{sec:baseline-exp}).
   \item \textbf{orlib} (10 instances): the adapted OR-Library files,
     $n=50,\dots,500$.
 \end{itemize}
@@ -148,7 +149,7 @@ on the optimal cost:
 The first holds because every employee performs one path and costs at least
 $0.6$. For the second, a solution with $f$ full-time and $h$ half-time
 employees has capacity $fW+hW/2\ge\sum_i d_i$, so its cost
-$f+0.6h\ge f+0.5h\ge\sum_i d_i/W$. These bounds will be used to judge the
+$f+0.6h\ge f+0.5h\ge\sum_i d_i/W$. These bounds are used to judge the
 root LP bounds of the models in Section~\ref{sec:baseline-exp}.
 
 \begin{table}[ht]
@@ -186,7 +187,7 @@ optimal cost in the scale group.}
 \begin{itemize}
   \item \emph{Size.} Density stays near $0.64$ in the scale group, so
     $|\A|$ grows quadratically (from 29 arcs at $n=10$ to about 12\,800 at
-    $n=200$). With an employee pool of size $\Theta(n)$, (AF) will have
+    $n=200$). With an employee pool of size $\Theta(n)$, (AF) has
     millions of variables at the top of the range. This is a deliberate
     stress test for the compact models.
   \item \emph{Profile.} The peak profile concentrates the duties in two rush

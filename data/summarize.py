@@ -1,7 +1,7 @@
 """Compute structural statistics of all instances.
 
 Writes results/instances_summary.csv (one row per instance) and
-report/tables/instances.tex (aggregated table for Section 2).
+report/tables/inst_{scale,factor,orlib}.tex (aggregated tables for Section 2).
 """
 from __future__ import annotations
 

@@ -1,6 +1,7 @@
 """Solve one instance with one model and return a row of statistics.
 
-Usage: python src/solve.py <instance.json> --model AF|CF|CFM [--time-limit 300]
+Usage: python src/solve.py <instance.json> --model MODEL [--time-limit 300]
+MODEL: AF, CF, CFM (baseline), CF+ and its ablation variants, SP (Section 5).
 """
 from __future__ import annotations
 
@@ -136,7 +137,7 @@ def main() -> None:
     a = ap.parse_args()
     row = run(a.instance, a.model, a.time_limit, a.threads, a.solver)
     for k, v in row.items():
-        print(f"{k:>12}: {v}")
+        print(f"{k:>12}: {round(v, 6) if isinstance(v, float) else v}")
 
 
 if __name__ == "__main__":

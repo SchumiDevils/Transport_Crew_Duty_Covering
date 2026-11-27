@@ -1,8 +1,12 @@
-# Modeling / solvers
-gurobipy>=12.0        # main MILP solver (needs a free academic license: https://www.gurobi.com/academia/)
-highspy>=1.7          # open-source MILP/LP solver, fallback and cross-check
+# Exact versions used for all results in the report (Python 3.12.10).
+# The solver version matters: the experiments rely on HiGHS 1.16 behaviour
+# (see Sections 5.1 and 6.1 of the report).
+highspy==1.16.0       # MILP/LP solver used for every experiment
+numpy==2.5.5
+pandas==3.1.1
+matplotlib==3.11.2
 
-# Data / experiments / plots
-numpy
-pandas
-matplotlib
+# Optional second solver back-end (src/milp.py). Without an academic licence
+# gurobipy is limited to 2000 variables/constraints, which covers only the
+# hand-made tests in tests/test_small.py; it is skipped if not installed.
+gurobipy==14.0.0

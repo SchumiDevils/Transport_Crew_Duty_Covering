@@ -28,3 +28,6 @@ report/*.synctex.gz
 Thumbs.db
 .vscode/
 .idea/
+
+# Submission archive (built by make_archive.py)
+dist/

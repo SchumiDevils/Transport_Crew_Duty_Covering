@@ -63,7 +63,7 @@ def main() -> None:
 
     out = ROOT / "report" / "figures" / "instances.pdf"
     out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out)
+    fig.savefig(out, metadata={"CreationDate": None})
     fig.savefig(out.with_suffix(".png"), dpi=150)
     print(f"wrote {out}")
 

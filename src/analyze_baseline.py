@@ -160,7 +160,7 @@ def figure_scale(df: pd.DataFrame) -> None:
     b.set_title("(b) gap at the time limit", fontsize=9, color=INK, loc="left")
     b.set_ylim(bottom=0)
     b.legend(loc="upper left")
-    fig.savefig(FIG / "base_scale.pdf")
+    fig.savefig(FIG / "base_scale.pdf", metadata={"CreationDate": None})
     fig.savefig(FIG / "base_scale.png", dpi=150)
     plt.close(fig)
 

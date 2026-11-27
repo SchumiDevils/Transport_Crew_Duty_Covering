@@ -11,7 +11,6 @@ Fairness rules (same instances, machine, time limit, threads for all runs):
 """
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import matplotlib
@@ -181,7 +180,7 @@ def figure_scale(df) -> None:
     b.set_ylim(bottom=0)
     h, lab = a.get_legend_handles_labels()
     fig.legend(h, lab, loc="outside upper center", ncol=5)
-    fig.savefig(FIG / "cmp_scale.pdf")
+    fig.savefig(FIG / "cmp_scale.pdf", metadata={"CreationDate": None})
     fig.savefig(FIG / "cmp_scale.png", dpi=150)
     plt.close(fig)
 
@@ -207,7 +206,7 @@ def figure_profile(df) -> None:
     ax.set_xlabel(r"$\tau$ (time / best time)")
     ax.set_ylabel(r"share of instances solved within $\tau$")
     ax.legend(loc="center left", bbox_to_anchor=(0.0, 0.62))
-    fig.savefig(FIG / "cmp_profile.pdf")
+    fig.savefig(FIG / "cmp_profile.pdf", metadata={"CreationDate": None})
     fig.savefig(FIG / "cmp_profile.png", dpi=150)
     plt.close(fig)
     return int(keep.sum())

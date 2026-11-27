@@ -1,264 +1,169 @@
-# Project n. 2 — Transport Crew Duty Covering (Project Plan & Step-by-Step Guide)
+# Transport Crew Duty Covering
 
-**Course:** Model-driven Decision Methods (Università di Pisa)  
-**Track:** Normal Project  
-**Status:** Phase 3 written (Sections 1–6, full draft) → next: send Milestone 3 e-mail (final approval), then the code archive
+Project n. 2 of *Model-driven Decision Methods*, Università di Pisa,
+A.Y. 2026/2027. Group 1: Iachim Cristian.
 
-> **Source documents.** The binding document for this project is *“Model-driven Decision Methods: Project”* (`projects-proposals.pdf`, steps 1–6 + report contents). The other file, `projects-instructions.pdf`, is the guide of a **different course** (*Optimization for Data Science, 784AA*). Its general workflow advice (partial reports, plagiarism, email-only communication) is a good fit, but its convergence-theory requirements (§3.3) do **not** apply here. Where the two disagree, follow the MDDM document and ask the lecturer.
+The full report is [`report/main.pdf`](report/main.pdf). This README
+summarises the project and explains how to run the code and reproduce every
+number, table and figure in the report.
 
----
+## Problem
 
-## 1. Problem Statement (Verbatim)
+A transport company must cover a set of driving duties, each with a start
+and an end time. A compatibility graph G states which duty can follow which
+for the same employee: duty j can follow duty i if the transfer time from the
+end of i to the start of j fits in between. Every employee has a maximum
+working time (sum of the driving times) and a maximum total time (from the
+start of the first duty to the end of the last one). Full-time employees have
+limits (W, T) and cost 1. Half-time employees have limits (W/2, T/2) and cost
+0.6. The goal is to assign every duty to exactly one employee at minimum total
+cost.
 
-> **Project n. 2**  
-> A transport company has to cover a set of driving duties with the available personnel. Each employee can perform different subsets of the duties; the subsets are implicitly specified under the form of a (given) “compatibility graph”. That is, for each duty its starting time and the ending time are given; furthermore, for any pair of duties it is known the time that it takes to move from the place where the first one ends to the place where the other one starts, so that it is known whether or not it is possible for the same employee to perform both in sequence. Union regulations set for each employee a maximum working time (sum of the driving time) and a maximum total time (difference between the start of his first duty and the end of its last one). Employees can be both half-time or full-time; the former have maximum working time and total time half than the latter, but cost 60% as much. The problem is to assign a feasible set of duties to an appropriate number of employees (of which there is an unlimited supply, of either type) in order to have each duty performed by exactly one employee, at minimum total cost.
+Equivalently: partition the duties into paths of the DAG G, each path
+feasible for the type of employee it is given to. The problem is strongly
+NP-hard (report, Proposition 6). Working time counts only the driving time of
+the duties, not the transfers between them (report, §1.2).
 
-### Quick Problem Breakdown
+## Methods
 
-| Component | Details |
-| :--- | :--- |
-| **Duties** | Set $D = \{1, \dots, n\}$; each duty $i$ has start time $s_i$, end time $e_i$, and driving duration $d_i = e_i - s_i$. |
-| **Compatibility Graph** | Directed Acyclic Graph (DAG) $G = (D, A)$ where arc $(i, j) \in A \iff e_i + t_{ij} \le s_j$, with $t_{ij}$ being the transfer time from the end location of $i$ to the start location of $j$. |
-| **Employee Types** | Unlimited supply of **Full-Time (FT)** and **Half-Time (HT)** employees. |
-| **Union Regulations** | **FT:** max working time (sum of $d_i$) $\le W$, max total spread ($e_{\text{last}} - s_{\text{first}}$) $\le T$, cost $= C$ (e.g., $1.0$).<br>**HT:** max working time $\le W/2$, max total spread $\le T/2$, cost $= 0.6C$ (e.g., $0.6$). |
-| **Goal** | Partition $D$ into feasible employee shifts so every duty is covered by **exactly one** employee at **minimum total cost**. |
+| Model | Idea | Exact on | Report |
+|---|---|---|---|
+| (AF) | arc-flow, one flow per candidate employee | any DAG | §1.3 |
+| (CF) | assignment with pairwise conflict constraints | transitive G | §1.3 |
+| (CF-M) | (CF) with big-M spread constraints | transitive G | §1.3 |
+| (CF+) | (CF) with clique constraints, symmetry breaking and an improving cut | transitive G | §5.1 |
+| (SP-CG) | set partitioning by column generation, with price-and-branch and reduced-cost enumeration for optimality | any DAG | §5.2 |
 
----
+On non-transitive graphs, such as the OR-Library instances, the (CF)-type
+models are restrictions of the problem: their solutions are feasible, but they
+can miss the optimum.
 
-## 2. Recommended Repository Layout
+## Main results
 
-> **Note:** Keep any Git repository **private** (the lecturer prefers it; not strictly mandatory for normal projects). The MDDM document asks for **one** `.zip`/`.tgz` holding the final PDF report *and* all support files. The “code only after report approval” rule comes from the ODS document, so confirm the order with the lecturer.
+76 instances (66 generated, 10 from the OR-Library), 300 s per run, HiGHS
+1.16, one thread per run.
 
-```text
-project/
-├── README.md                 # This project plan & execution guide
-├── data/
-│   ├── instances/            # Generated (or downloaded) benchmark instances
-│   └── generator.py          # Scalable parameterized instance generator
-├── src/
-│   ├── models/               # Baseline MILP(s) & improved formulations / CG
-│   ├── heuristics/           # Constructive/greedy bounds & warm-starts
-│   ├── validator.py          # Independent feasibility & cost checker
-│   └── run_experiments.py    # Automated benchmark runner
-├── results/
-│   ├── raw/                  # Solver logs & CSV outputs
-│   └── plots/                # Generated figures & LaTeX tables
-└── report/
-    ├── main.tex              # LaTeX report (incremental across phases)
-    └── main.pdf              # Compiled PDF report for email submissions
+| | (AF) | (CF) | (CF-M) | (CF+) | (SP-CG) |
+|---|---|---|---|---|---|
+| instances solved to optimality | 15 | 47 | 41 | 49 | **70** |
+| largest n solved (all seeds) | 25 | 50 | 50 | 50 | **200** |
+| mean LP gap | 19.6% | 29.6% | 29.5% | 24.2% | **0.1%** |
+
+(SP-CG) finds the best known solution on all 76 instances. It proves
+optimality for the OR-Library instances up to n = 200 and ends within 1.2–3.1%
+of optimality on the larger ones. Section 6 of the report has the full
+comparison, including an ablation study of (CF+).
+
+## Setup
+
+Python 3.12. From this folder:
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate      Linux/macOS: source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
----
+All experiments use **HiGHS 1.16.0**, which needs no licence. Other HiGHS
+versions may give different running times. The report (§5.1, §6.1) describes
+two HiGHS 1.16 behaviours that the code works around. Gurobi is optional:
+without a licence it is only used to cross-check the small tests.
 
-## 3. Step-by-Step Execution Plan
+## Quick check (under a minute)
 
-The course recommends delivering the report in **three incremental phases** via email so conceptual mistakes are caught early before heavy coding or experiments.
+```bash
+python tests/test_small.py
+```
 
----
+This runs 9 hand-made instances with known optimum and 8 generated instances
+through every model, and checks each solution with the independent validator.
+It also checks that the validator rejects 5 broken solutions. It ends with
+`ALL PASSED`.
 
-### Phase 0: Environment & Project Setup
+Solve one instance with one model:
 
-- [x] **Choose your tech stack** (Normal project gives full freedom). **Decision:**
-  - **Language:** Python 3.12.
-  - **Solver (revised in Phase 2):** **HiGHS 1.16** (`highspy`, open source) is the baseline solver: no licence is needed, so the lecturer can reproduce everything. **Gurobi** (`gurobipy`) is a second back-end over the *same* solver-independent model ([src/milp.py](src/milp.py)). Without an academic key it is limited to 2000 variables, so it is used only to cross-check the tiny tests. With a key it becomes a candidate improvement for Phase 3 (Track C).
-  - Pinned in [requirements.txt](requirements.txt).
-- [x] **Install the environment** (Python 3.12.10 + `.venv` done; **still to do:** Gurobi academic key, as without it gurobipy is size-limited):
-  ```powershell
-  winget install Python.Python.3.12
-  py -3.12 -m venv .venv; .\.venv\Scripts\Activate.ps1
-  pip install -r requirements.txt
-  grbgetkey <your-academic-key>   # after requesting the license on gurobi.com
-  ```
-- [x] **Initialize workspace & LaTeX report template**:
-  - [x] Folder layout created (`data/`, `src/models`, `src/heuristics`, `results/raw`, `results/plots`, `report/`).
-  - [x] [report/main.tex](report/main.tex): title page with project number + verbatim statement, six section stubs that follow the MDDM report contents. It builds with `latexmk -pdf main.tex`.
-  - [x] Fill in **group number, names, matricola, e-mails**.
-  - [x] Local Git repo initialised (`main` branch, `.gitignore`). If you add a remote (GitHub/GitLab), make it **private**.
+```bash
+python src/solve.py data/instances/orlib/csp100.json --model SP --time-limit 60
+```
 
----
+Models: `AF`, `CF`, `CFM` (baseline, §1.3); `CF+` and its ablation variants
+`CF+noclq`, `CF+chain`, `CF+nosym`, `CF+nostart` (§5.1); and `SP` (column
+generation, §5.2). To check any solution file independently:
 
-### Phase 1: Mathematical Modeling & Instance Generation (Official Steps 1–2)
+```bash
+python src/validator.py <instance.json> <solution.json>
+```
 
-#### Step 1 — Mathematical Programming Formulation(s)
+## Full reproduction
 
-> **Step 1 status: written** in [report/sections/model.tex](report/sections/model.tex) (§1.1–1.5 of the PDF). Contents: assumptions A1–A5; models **(AF)** arc-flow, **(CF)** conflict, **(CF-M)** big-M variant, **(SP)** set partitioning; Propositions 1–6 (transitivity, correctness of AF/CF, LP-bound comparison, strong NP-hardness). Questions to put in the Milestone 1 e-mail: A1 (deadhead counted as working time?) and the order of report vs. code submission.
+The instances, and the tables and figures computed from the experiment CSV
+files, regenerate byte-identical, up to line endings, which follow the
+operating system. The experiments themselves stop at a time limit of 300 s, so
+on a different machine the running times will differ. For runs that hit the
+limit, the final solution and bound can differ too, and in borderline cases so
+can whether a run finishes in time. Proven optimal values cannot.
 
-- [x] **Clarify domain details & assumptions** (document clearly in the report and verify with the lecturer if needed):
-  - Confirm that transfer time $t_{ij}$ affects feasibility ($e_i + t_{ij} \le s_j$) and total spread ($e_{\text{last}} - s_{\text{first}}$), while working time counts strictly the sum of driving times $\sum d_i$.
-  - Confirm feasibility assumptions for single duties (e.g., every duty satisfies $d_i \le W$ and $e_i - s_i \le T$; duties with $d_i > W/2$ can only be covered by FT employees).
-  - Note whether transfer times satisfy the triangle inequality (which makes $G$ transitive) or are general (requiring explicit path/flow sequencing).
-  - **Open question (ask the lecturer):** does “working time (sum of the driving time)” include the *deadhead* driving $t_{ij}$ between duties, or only $\sum d_i$? The plan assumes only $\sum d_i$.
-  - **Instance sanity:** working time ≤ spread always holds, so the working-time limit only matters if $W < T$. The generator must enforce this, or that constraint never binds.
-  - Cost is a **fixed cost per employee used** (1 for FT, 0.6 for HT), independent of the hours worked.
-- [x] **Derive the Baseline Compact MILP Formulation(s)**:
-  - **Option A — Employee-Indexed Arc-Flow Formulation** (works for any compatibility DAG $G$):
-    - Define a pool of candidate FT and HT employees (sized using an upper bound, e.g., $n$ or a heuristic bound).
-    - Binary variables: employee activation $y_k$, duty assignment $x_{ik}$, and sequence arcs $z_{ijk}$ on a source/sink augmented DAG.
-    - Constraints: exact duty coverage, flow conservation per active employee, working time limit $\sum_i d_i x_{ik} \le W_k y_k$, and total spread limit $e_{\text{last}} - s_{\text{first}} \le T_k$.
-  - **Option B — Employee-Indexed Assignment / Conflict Formulation** (when $G$ is transitive):
-    - Avoids $O(|A| \cdot |K|)$ arc variables by forbidding incompatible pairs $(i, j)$ on the same employee: $x_{ik} + x_{jk} \le y_k$.
-    - **Key insight for spread:** $\max_{j \in S} e_j - \min_{i \in S} s_i \le T_k \iff e_j - s_i \le T_k\;\forall i, j \in S$. You can compare a naive Big-$M$ spread formulation against a tighter pairwise-incompatibility formulation.
-- [x] **Outline an Extended Formulation (for Phase 3)**:
-  - Formulate the **Set Partitioning (Master) Problem** over all feasible FT and HT shifts (paths in $G$), setting up the theoretical foundation for Column Generation / Branch-and-Price later.
-- [x] **Analyze model size & theoretical properties**:
-  - Count variables and constraints as functions of $|D|$, $|A|$, and employee pool size $|K|$.
-  - Note structural properties (DAG acyclicity, employee symmetry, LP relaxation strength, NP-hardness). *Correction:* a naive reduction from Bin Packing/Partition does **not** work, because a mix of HT and FT can undercut it. The report uses a tight **3-Partition** reduction instead, which gives *strong* NP-hardness.
+The results in the report were obtained on an Intel Core i5-12500H with 16 GB
+of RAM (Windows 11), with 1 thread per run and 5 runs in parallel. To check
+the analysis without rerunning the experiments, run the two `analyze_*.py`
+scripts on the CSV files provided.
 
-#### Step 2 — Benchmark Instances & Scalable Generator
+| Step | Command | Output | Time |
+|---|---|---|---|
+| Instances (§2) | `python data/generator.py --suite` | `data/instances/{scale,factor}` (66) | seconds |
+| | `python data/convert_orlib.py` | `data/instances/orlib` (10) | seconds |
+| | `python data/summarize.py` | `results/instances_summary.csv`, `report/tables/inst_*.tex` | seconds |
+| | `python data/plot_instances.py` | `report/figures/instances.pdf` | seconds |
+| Baseline (§4) | `python src/run_experiments.py --models AF CF CFM --groups scale factor orlib --time-limit 300 --threads 1 --workers 5 --out results/raw/baseline.csv` | `results/raw/baseline*` | ~1.7 h |
+| | `python src/analyze_baseline.py` | `report/tables/base_*.tex`, `report/figures/base_scale.pdf` | seconds |
+| Improvements (§6) | `python src/run_experiments.py --models CF+ SP --groups scale factor orlib --time-limit 300 --threads 1 --workers 5 --out results/raw/improved.csv` | `results/raw/improved*` | ~35 min |
+| Ablation (§6.6) | `python src/run_experiments.py --models CF+noclq CF+chain CF+nosym CF+nostart --groups scale --min-n 40 --max-n 100 --time-limit 300 --threads 1 --workers 5 --out results/raw/ablation.csv` | `results/raw/ablation*` | ~1 h |
+| | `python src/analyze_improved.py` | `report/tables/cmp_*.tex`, `report/figures/cmp_*.pdf` | seconds |
+| Report | `cd report && latexmk -pdf main.tex` | `report/main.pdf` | seconds |
 
-> **Step 2 status: done** — report §2 in [report/sections/instances.tex](report/sections/instances.tex). Reproduce everything (from the project root, venv active):
-> ```powershell
-> python data/generator.py --suite   # 66 generated instances -> data/instances/{scale,factor}
-> python data/convert_orlib.py       # 10 OR-Library files    -> data/instances/orlib
-> python data/summarize.py           # results/instances_summary.csv + report/tables/*.tex
-> python data/plot_instances.py      # report/figures/instances.pdf
-> ```
+The experiment runner skips runs already present in its output CSV, so an
+interrupted experiment resumes when the same command is run again. To rerun
+from scratch, delete or rename the CSV first.
 
-- [x] **Search for existing instances**:
-  - Check public transport / crew scheduling benchmarks (e.g., Bus Driver Scheduling / Vehicle Scheduling instances) to see if any can be adapted.
-  - **Result:** the OR-Library crew scheduling set (Beasley & Cao 1996, `csp50`–`csp500`) is adopted ([data/orlib/](data/orlib/), converted with W = 480, T = 720). Its graphs are given explicitly and are **not transitive**, so only (AF) is exact on them. (CF) is a *restriction* there (feasible solutions, upper bound), **not** a relaxation; this was corrected in Phase 2. BDSP (Kletzander & Musliu) was rejected: its rules are too different from ours, and the real data are not public.
-- [x] **Design and implement a scalable generator (`data/generator.py`)**:
-  - Make it deterministic via configurable random seeds and save instances in a clean format (JSON or plain text).
-  - Include parameters that **realistically control problem difficulty**:
-    1. **Instance size ($n = |D|$):** e.g., Tiny ($10$–$15$ for verification), Small ($20$–$40$), Medium ($50$–$100$), Large ($150$–$300+$).
-    2. **Time horizon & duty distribution:** uniform across the day vs. realistic peak hours (morning/evening rush waves, which create high concurrency and drive employee count).
-    3. **Duty durations ($d_i$):** short vs. long duties, including mixes that make FT vs. HT trade-offs non-trivial (e.g., awkward remainders where HT is cheaper than a lightly loaded FT shift).
-    4. **Spatial / Transfer matrix ($t_{ij}$):** e.g., $L$ depots/terminals in 2D space with asymmetric or Euclidean travel times, controlling **compatibility graph density**.
-    5. **Union regulation tightness ($W, T$):** ratio $W / T$ (tight driving limit vs. tight spread limit) so both constraints actively bind in different instance classes.
-    - *Finding:* transfer times hardly change density, because duties (~2 h) are much longer than transfers. `arc_drop` (randomly removing arcs) is therefore the direct density control.
-- [x] **Generate a structured benchmark suite** spanning sizes and difficulty regimes, and document its summary statistics (graph density, average duty length, theoretical minimum FT/HT bounds).
-  - 76 instances: **scale** (n = 10…200 × 3 seeds), **factor** (n = 40, one parameter varied at a time × 3 seeds), **orlib** (n = 50…500). Byte-identical when regenerated.
-  - Stats per instance: density, effective density (arcs within T), HT-eligible share, max concurrency, ρ(G), and the lower bounds 0.6ρ(G) and Σd/W.
+`python make_archive.py` packs the report and all files of this repository
+into `dist/MDDM_Project2_Group1.zip`.
 
-> **Milestone 1 (Email Lecturer):** Write Sections 1–2 of the PDF report (problem description, mathematical formulation(s), instance generator design & dataset summary) and send it to the lecturer for early review before running large-scale experiments.
+## Contents
 
----
+```text
+report/            main.pdf (the report), LaTeX sources, generated tables and figures
+src/
+  instance.py      instance format (JSON), structural statistics, lower bounds
+  milp.py          solver-independent MILP container; HiGHS and Gurobi back-ends
+  models/
+    baseline.py    (AF) arc-flow, (CF) conflict, (CF-M) big-M formulations   (§1.3)
+    improved.py    (CF+) strengthened conflict formulation + ablation variants (§5.1)
+    colgen.py      (SP-CG) column generation, price-and-branch, enumeration   (§5.2)
+  heuristics/
+    greedy.py      constructive heuristic (pool sizes, starting solution)
+  validator.py     independent feasibility and cost checker
+  solve.py         one instance x one model -> statistics row
+  run_experiments.py   parallel, resumable benchmark runner
+  analyze_baseline.py, analyze_improved.py   tables and figures of §4 and §6
+data/
+  generator.py     scalable instance generator (seeded)                         (§2)
+  convert_orlib.py OR-Library crew scheduling files -> JSON
+  orlib/           original OR-Library files (Beasley & Cao, 1996)
+  instances/       the 76 benchmark instances (scale, factor, orlib)
+tests/test_small.py    verification tests (§3.3, §5.3)
+results/
+  instances_summary.csv
+  raw/{baseline,improved,ablation}.csv   one row per run (all metrics)
+  raw/*_solutions/  every solution found (JSON, validator format)
+  raw/*_logs/       HiGHS logs of the compact-model runs (SP-CG runs write none)
+make_archive.py    builds the submission archive
+```
 
-### Phase 2: Baseline Implementation & Computational Analysis (Official Steps 3–4)
+## Instance and solution format
 
-#### Step 3 — Initial Implementation & Verification
-
-> **Step 3 status: done.** Run the checks with `python tests/test_small.py` (9 hand-made instances × 3 models × 2 solvers, plus 5 validator negative tests, all passing). Full baseline experiment:
-> ```powershell
-> python src/run_experiments.py --models AF CF CFM --groups scale factor orlib --time-limit 300 --threads 1 --workers 5 --out results/raw/baseline.csv
-> python src/analyze_baseline.py     # report/tables/base_*.tex, report/figures/base_scale.pdf
-> ```
-> **Corrections made in Phase 2:**
-> - On non-transitive graphs (CF) is a **restriction**, not a relaxation (Rédei: every acyclic tournament has a Hamiltonian path). Fixed in §1.3 and §2.
-> - The employee pool for (CF) must be sized from a *pairwise-compatible* greedy solution. Otherwise (CF) can become infeasible on non-transitive graphs; a test case caught this.
-> - The pool size comes from a simple greedy upper bound already in the baseline. With the trivial bound $|K| = n$, the arc-flow model is unbuildable beyond n ≈ 60. The greedy is **not** passed to the solver as a MIP start (that stays a Phase 3 improvement).
-
-- [x] **Implement an independent solution validator (`src/validator.py`)**:
-  - Given an instance and a solver output, verify from scratch:
-    - Every duty is assigned to **exactly one** employee.
-    - Each employee's duties form a valid directed path in the compatibility graph $G$.
-    - Sum of driving times $\le W$ (FT) or $\le W/2$ (HT).
-    - Spread $(e_{\text{last}} - s_{\text{first}}) \le T$ (FT) or $\le T/2$ (HT).
-    - Recomputed total cost matches the solver's reported objective.
-- [x] **Implement the baseline MILP model(s)** (`src/models/baseline.py`): (AF), (CF), (CF-M).
-  - Keep solver parameters at **default settings** for a clean baseline.
-  - Enforce a consistent wall-clock time limit (e.g., 300s or 600s) and fixed thread count across all runs. **Chosen:** 300 s, 1 thread per run, 5 runs in parallel; models over 4M non-zeros are recorded as `too_large`.
-- [x] **Sanity-test on tiny instances** ($n = 5$–$15$): [tests/test_small.py](tests/test_small.py).
-  - Manually verify optimal solutions on hand-crafted edge cases (e.g., all HT optimal, all FT optimal, mixed FT+HT optimal, tight spread vs. tight working time).
-- [x] **Build an automated experiment runner (`src/run_experiments.py`)** (resumable, parallel):
-  - Run across the full benchmark suite and log per-instance metrics to CSV: `instance`, `n`, `density`, `status`, `best_obj`, `best_bound`, `mip_gap`, `root_lp_bound`, `runtime_sec`, `bb_nodes`, `num_ft`, `num_ht`, `valid`. *Refined:* `root_lp_bound` is split into `lp_bound` (pure LP relaxation, i.e. formulation strength) and `root_bound` (after the solver's root cuts).
-
-#### Step 4 — Initial Performance Analysis & Bottleneck Diagnosis
-
-- [x] **Summarize baseline performance** with clean tables and readable plots (use log scales for runtimes/gaps):
-  - Runtime and MIP gap vs. instance size $n$.
-  - Effect of compatibility density, peakiness, and $W/T$ tightness on hardness.
-  - Maximum instance size reliably solved to optimality on your machine.
-- [x] **Identify the primary bottlenecks** (form concrete hypotheses for Step 5):
-  - **Symmetry:** Are many Branch-and-Bound nodes wasted exploring permutations of identical FT/HT employees?
-  - **Weak LP relaxation:** Is there a large integrality gap at the root node (e.g., fractional $y_k$ or loose Big-$M$ spread constraints)?
-  - **Model blow-up:** Does the number of variables/constraints scale too fast with $n$ and $|A|$?
-  - **Poor primal bounds:** Does the solver struggle to find good feasible integer solutions early?
-
-> **Step 4 status (done):** 228 runs (3 models × 76 instances), report Section 4 ([report/sections/baseline.tex](report/sections/baseline.tex)). Reproduce: `python src/run_experiments.py --models AF CF CFM --groups scale factor orlib --time-limit 300 --threads 1 --workers 5 --out results/raw/baseline.csv` (~1.7 h), then `python src/analyze_baseline.py`.
-> - Largest $n$ solved for all 3 seeds: (AF) 25, (CF) 50, (CF-M) 50; too large from $n=150$. No OR-Lib instance solved; (AF) too large from csp250.
-> - LP gap: (AF) 19.6%, (CF)/(CF-M) 30.5%; root gap after HiGHS cuts: (CF) 0.8%, (CF-M) 5.5%, (AF) 12.2%.
-> - Bottlenecks B1–B5: model size (employee index), symmetry, weak CF LP, poor incumbents (AF worse than greedy in 14/49 time-limit runs), non-transitive graphs. Each maps to a Phase 3 track: B1/B5 → Track B (column generation), B2/B3 → Track A (symmetry breaking, clique constraints), B4 → Track C (greedy MIP start), plus objective rounding to multiples of 0.2.
-> - **Correction found:** 3 (CF-M) time-limit incumbents paid for idle employees ($y_k=1$, no duty), so the validator flagged a cost mismatch. The shifts are feasible. `src/solve.py` now validates decoded shifts at their own cost and logs the idle cost; the 3 CSV rows were re-recorded with the same rule.
-
-> **Milestone 2 (Email Lecturer):** Add Sections 3–4 to the PDF report (implementation choices, baseline experimental setup, tables/plots, bottleneck analysis) and email the updated report for feedback.
-
----
-
-### Phase 3: Performance Improvements & Comparative Evaluation (Official Steps 5–6)
-
-#### Step 5 — Propose & Implement Improvements
-
-Select **at least one** (ideally 2–3 complementary or progressively stronger) improvement strategies directly targeting the bottlenecks found in Step 4:
-
-- [x] **Track A — Model Strengthening & Preprocessing (Compact MILP)** → **(CF+)** in [src/models/improved.py](src/models/improved.py)
-  - **Graph & domain preprocessing:** Remove HT-infeasible duties ($d_i > W/2$) and infeasible arcs/pairs where $e_j - s_i > T_k$ or $d_i + d_j > W_k$; compute a tight upper bound on $|K_{\text{FT}}|$ and $|K_{\text{HT}}|$ via a fast greedy heuristic.
-  - **Symmetry breaking:** Enforce non-increasing employee activation ($y_1 \ge y_2 \ge \dots$) and lexicographic / minimum-duty-index ordering (e.g., employee $k$ can only be assigned duty $i$ if $i \ge k$, or ordered by earliest start time).
-  - **Valid inequalities:** Add clique inequalities on the incompatibility graph (duties overlapping in time cannot share an employee), disaggregated constraints, or replace Big-$M$ spread constraints with pairwise conflict cuts.
-- [x] **Track B — Reformulation via Column Generation / Branch-and-Price (High-Impact Approach)** → **(SP-CG)** in [src/models/colgen.py](src/models/colgen.py)
-  - **Restricted Master Problem (RMP):** Linear relaxation of the Set Partitioning / Set Covering formulation initialized with heuristic shifts.
-  - **Pricing Subproblems (one for FT, one for HT):** Find a feasible shift (path in DAG $G$) with negative reduced cost $c_{\text{type}} - \sum_{i \in p} \pi_i < 0$ subject to working time and spread limits — a **Resource-Constrained Shortest Path Problem (RCSPP)** solvable via dynamic programming / labeling along a topological ordering of $G$.
-  - **Integer solutions:** Implement either **Price-and-Branch** (solve root LP via CG, then solve RMP as an integer program — simple and often near-optimal) or full **Branch-and-Price** (with Ryan-Foster branching on duty pairs).
-- [x] **Track C — Heuristic Warm-Starts & Solver Parameter Tuning** (partly: greedy warm start via an improving cut; no parameter tuning)
-  - Implement a fast constructive + local-search heuristic (e.g., greedy path packing / shift merging/splitting) to feed a strong initial MIP start to the solver.
-  - Systematically test targeted solver parameters (e.g., symmetry level, cut aggressiveness, MIP focus, branching priorities on $y_k$ variables) and measure their isolated impact.
-
-#### Step 6 — Comparative Computational Evaluation
-
-- [x] **Run controlled apples-to-apples experiments**:
-  - Evaluate the baseline and each proposed improvement on the **exact same benchmark instances**, hardware, thread limit, and time limit.
-  - Verify every solution with `validator.py` and confirm matching optimal objectives on all instances solved to optimality by both methods.
-- [x] **Analyze & visualize the impact**:
-  - Report speedup factors, reduction in MIP gap, root LP gap improvement, B&B node reduction, and increase in maximum solvable instance size.
-  - Use concise, readable visuals: performance profiles (Dolan–Moré), log-scale runtime vs. $n$ curves, root gap comparison bar charts, and compact summary tables (avoid multi-page raw number dumps).
-  - Clearly discuss **trade-offs** (e.g., overhead of CG on small instances vs. massive gains on large instances, or which improvement contributes most).
-
-> **Phase 3 status (done):** report §5 [report/sections/improvements.tex](report/sections/improvements.tex), §6 [report/sections/comparison.tex](report/sections/comparison.tex). Reproduce (~1.5 h): 
-> ```powershell
-> python tests/test_small.py   # now also SP, all CF+ variants, 8 random instances
-> python src/run_experiments.py --models CF+ SP --groups scale factor orlib --time-limit 300 --threads 1 --workers 5 --out results/raw/improved.csv
-> python src/run_experiments.py --models CF+noclq CF+chain CF+nosym CF+nostart --groups scale --min-n 40 --max-n 100 --time-limit 300 --threads 1 --workers 5 --out results/raw/ablation.csv
-> python src/analyze_improved.py   # report/tables/cmp_*.tex, report/figures/cmp_*.pdf
-> ```
-> - **(SP-CG)** (column generation + price-and-branch + reduced-cost enumeration, exact on any DAG): 70/76 solved vs 47 for the best baseline, ~18× faster (shifted geo. mean), best known solution on all 76, all scale instances up to n = 200, OR-Lib csp50–csp200 proved optimal (first time), gaps 1.2–3.1 % on csp250–500. LP bound 0.1 % from optimum.
-> - **(CF+)** (clique cover, symmetry breaking, improving cut): 49/76 solved, 2–7× smaller than (CF); the ablation shows symmetry breaking is the only component that clearly helps.
-> - **Corrections to the plan found in Phase 3:**
->   - Objective rounding to multiples of 0.2 is **not** an improvement: HiGHS already detects the integral objective (scale 5). §4.2 corrected.
->   - The time-conflict graph is an interval graph only with zero transfer times; with transfers it is co-comparability (possibly exponentially many maximal cliques) → interval cliques + greedy clique cover.
->   - (SP) must keep "= 1" rows on non-transitive graphs (covering is only valid when G is transitive).
->   - Price-and-branch alone proves nothing → reduced-cost enumeration (Prop. 7) gives exactness without full branch-and-price.
->   - **HiGHS 1.16 MIP-start bug**: `setSolution` + presolve drops the objective offset and returns wrong "optimal" values (9.6 reported as 8.8). Replaced by a solver-independent improving cut `c·x ≤ z̄ − 0.2`.
->   - HiGHS overran the time limit by up to 3 min on MILPs with > 0.5 M columns → enumeration capped at 250 k columns; max SP time now 301 s.
->   - The O(n) "spread chain" has the same LP bound but a much weaker root (hides conflicts from HiGHS's clique table) → kept only as an ablation variant.
-
-> **Milestone 3 (Email Lecturer):** Complete Sections 5–6 of the PDF report (description of improvements + comparative evaluation & conclusions) and submit the full report for final approval.
-
----
-
-## 4. Final Deliverables & Oral Exam Checklist
-
-### A. Final Report (PDF, sent via email first)
-
-Verify that the PDF report includes all mandatory items:
-- [x] **Title page:** Group number, member names/matricola/emails, project number, and verbatim problem statement.
-- [x] **Section 1:** Description of the optimization problem and mathematical model(s) + notation & theoretical discussion.
-- [x] **Section 2:** Description of the instances and scalable generator design.
-- [x] **Section 3:** Description of the initial implementation (tools, language, solver) with justification of choices.
-- [x] **Section 4:** First computational experiments with clean tables/graphs and bottleneck analysis.
-- [x] **Section 5:** Description of the proposed improvements (mathematical & algorithmic details).
-- [x] **Section 6:** Comparative computational evaluation proving the effectiveness of the improvements.
-- [ ] Originality check: all text and code are your own work, with any external references properly cited.
-
-### B. Code & Supporting Archive (`.zip` or `.tgz`; MDDM says one archive together with the final report. Confirm the order with the lecturer.)
-
-- [ ] Source code of all models, generator, heuristics, validator, and experiment scripts (clean and commented).
-- [ ] Instances (or exact generator script + parameters/seeds to reproduce them identically).
-- [ ] Execution instructions / scripts so the lecturer can reproduce results easily.
-- [ ] Detailed experiment outputs (CSV files / logs / spreadsheets).
-- [ ] Confirm any Git repository remains private.
-
-### C. Oral Exam Preparation
-
-- [ ] Submit the official course evaluation on `esami.unipi.it` **before** the oral exam.
-- [ ] Agree on an oral exam date with the lecturer once both report and code archive are approved.
-- [ ] Review key insights from your project (why specific formulations/valid inequalities/CG work, LP relaxation strength, symmetry, complexity) and how they connect to the broader course syllabus.
+An instance is a JSON file with `W` and `T` (minutes), the duty `start` and
+`end` times, and the arcs of the compatibility graph (`arcs`, pairs of duty
+indices). A solution is
+`{"instance", "objective", "shifts": [{"type": "FT"|"HT", "duties": [...]}]}`,
+with each shift's duties in order. See `src/instance.py` and
+`src/validator.py`.

@@ -1,8 +1,10 @@
 """Greedy constructive heuristic.
 
-Used in the baseline only to obtain a feasible cost z_bar, which bounds the
-size of the employee pool (Section 1.3): an optimal solution uses at most
-floor(z_bar) full-time and floor(z_bar / 0.6) half-time employees.
+Its cost z_bar bounds the size of the employee pool of the compact models
+(Section 1.3): an optimal solution uses at most floor(z_bar) full-time and
+floor(z_bar / 0.6) half-time employees. In the improved methods (Section 5)
+the greedy solution is also the starting solution: through the improving cut
+in (CF+), and as initial columns in column generation.
 
 Duties are scanned by start time; each duty is appended to the open shift
 whose last duty has an arc to it in G, which still respects the limits, and
