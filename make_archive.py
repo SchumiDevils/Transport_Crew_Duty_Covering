@@ -30,7 +30,7 @@ def main() -> None:
     stale = [p for p in src if p.stat().st_mtime > pdf.stat().st_mtime]
     if stale:
         raise SystemExit("report/main.pdf is older than " + ", ".join(
-            str(p.relative_to(ROOT)) for p in stale[:3]) + ": recompile (cd report && latexmk -pdf main.tex)")
+            str(p.relative_to(ROOT)) for p in stale[:3]) + ": recompile with (cd report && latexmk -g -pdf main.tex)")
     out = ROOT / "dist" / f"{NAME}.zip"
     out.parent.mkdir(exist_ok=True)
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:

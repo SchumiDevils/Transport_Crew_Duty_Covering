@@ -33,10 +33,14 @@ from src.instance import COST_FT, COST_HT, Instance
 
 EPS = 1e-7
 STEP = 0.2                      # all costs are multiples of 0.2
+NUM_TOL = 1e-4                  # allowance for floating-point error in LP values and duals
 
 
 def ceil_step(z: float) -> float:
-    return math.ceil(z / STEP - 1e-6) * STEP
+    """Round a lower bound up to the next multiple of 0.2. A value at most
+    NUM_TOL above a multiple is treated as that multiple, so solver round-off
+    (e.g. 17.2000003 for 17.2) can never push the bound one step too high."""
+    return math.ceil((z - NUM_TOL) / STEP) * STEP
 
 
 class Shifts:
@@ -310,7 +314,9 @@ def solve_sp(inst: Instance, time_limit: float = 300, enum_max: int = 250_000,
     # ------------------------------------------- reduced-cost enumeration
     enum_cols, nodes, enum_done = math.nan, 0, False
     if exact_done and ub - lb > EPS and time.perf_counter() < deadline:
-        delta = ub - STEP - z_lp
+        # NUM_TOL widens the threshold: round-off in z_LP or in the duals may
+        # only add columns to the enumeration, never drop a needed one
+        delta = ub - STEP - z_lp + NUM_TOL
         ec = enumerate_columns(S, pi, delta, enum_max, deadline)
         if ec is not None:
             enum_done = True
